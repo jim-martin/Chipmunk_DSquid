@@ -64,6 +64,15 @@ var Demo = function() {
                 get_shape_info(data_index);
 
 
+                if(typeof(target_index) == "undefined"){
+                    target_index = data_index;
+                    shape.style = function(){
+                        return "rgb(255,0,0)";
+                    }
+                }
+                console.log("target_index: "+ target_index);
+
+
 				var body = shape.body;
 				var mouseJoint = self.mouseJoint = new cp.PivotJoint(mouseBody, body, v(0,0), body.world2Local(point));
 

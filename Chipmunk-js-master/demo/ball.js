@@ -5,6 +5,8 @@ var attractors = [];
 var xScale = 0;
 var yScale = 0;
 
+var target_index;
+
 var view_sequence = [];
 
 xSelect = document.getElementById('xAxis');

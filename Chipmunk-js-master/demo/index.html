@@ -41,18 +41,25 @@
 
 </style>
 <div id="tabbar"></div>
+<div>
+xAxis
+<select id="xAxis" onchange="redraw_graph();"></select>
+yAxis
+<select id="yAxis" onchange="redraw_graph();"></select>
+</div>
 <canvas></canvas>
-<script src="../cp.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="../cp.js"></script>
 <script src="demo.js"></script>
 
-<script src="LogoSmash.js"></script>
+<!--<script src="LogoSmash.js"></script>-->
 <script src="ball.js"></script>
-<script src="Joints.js"></script>
-<script src="PyramidStack.js"></script>
-<script src="PyramidTopple.js"></script>
-<script src="Convex.js"></script>
-<script src="Query.js"></script>
-<script src="buoyancy.js"></script>
+<!--<script src="Joints.js"></script>-->
+<!--<script src="PyramidStack.js"></script>-->
+<!--<script src="PyramidTopple.js"></script>-->
+<!--<script src="Convex.js"></script>-->
+<!--<script src="Query.js"></script>-->
+<!--<script src="buoyancy.js"></script>-->
 
 <script>
 	var bar = document.getElementById('tabbar');

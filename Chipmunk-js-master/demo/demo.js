@@ -8,8 +8,10 @@ var ctx;
 var GRABABLE_MASK_BIT = 1<<31;
 var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
 
+var space; //this probably shouldn't be global - Zack
+
 var Demo = function() {
-	var space = this.space = new cp.Space();
+	space = this.space = new cp.Space();
 	this.remainder = 0;
 	this.fps = 0;
 	this.mouse = v(0,0);

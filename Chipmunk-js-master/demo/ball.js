@@ -1,6 +1,8 @@
 var dataPoints = {};
 var headers = [];
 var bodies = [];
+var xScale = 0;
+var yScale = 0;
 
 xSelect = document.getElementById('xAxis');
 ySelect = document.getElementById('yAxis');
@@ -35,6 +37,8 @@ function redraw_graph() {
     console.log("x_var: " + x_var);
     console.log("y_var: " + y_var);
 
+    set_scale();
+
     //get all data bodies
     dataKeys = Object.keys(dataPoints);
     for (var i = 0; i < dataKeys.length; i++) {
@@ -50,8 +54,35 @@ function redraw_graph() {
 
         //console.log("xPos (post number): " + xPos);
         //console.log("yPos (post number): " + yPos);
-        body.setPos(v(xPos, yPos));
+        //body.setPos(v(xPos, yPos));
+        body.setPos(v(xPos * 580/xScale + 20, yPos * 380/ yScale + 20));
     }
+}
+
+
+//rescale
+function set_scale(){
+    var x_var = xSelect.options[xSelect.selectedIndex].value;
+    var y_var = ySelect.options[ySelect.selectedIndex].value;
+    for (var i = 0; i < dataKeys.length; i++) {
+        xPos = dataPoints[dataKeys[i]][x_var];
+        yPos = dataPoints[dataKeys[i]][y_var];
+
+
+        xPos = clean_datapoint(xPos);
+        yPos = clean_datapoint(yPos);
+        console.log(xPos);
+        console.log(yPos);
+
+        if(xPos > xScale){
+            xScale = xPos;
+        }
+        if(yPos > yScale){
+            yScale = yPos;
+        }
+    }
+    console.log("xScale: "+xScale);
+    console.log("yScale: "+yScale);
 }
 
 function first_draw() {
@@ -61,27 +92,18 @@ function first_draw() {
     console.log("y_var: " + y_var);
 
     dataKeys = Object.keys(dataPoints);
-    xScale = 0;
-    yScale = 0;
-    for (var i = 0; i < dataKeys.length; i++) {
-        //rescale
-        xPos = dataPoints[dataKeys[i]][x_var];
-        yPos = dataPoints[dataKeys[i]][y_var];
 
-        if(xPos > xScale){
-            xScale = xPos;
-        }
-        if(yPos > yScale){
-            yScale = yPos;
-        }
-    }
+    set_scale();
+
+
+
     for (var i = 0; i < dataKeys.length; i++) {
         //for (var i = 0; i < 1; i++) {
         var radius = 5;
         mass = 3;
         var body = space.addBody(new cp.Body(mass, cp.momentForCircle(mass, 0, radius, v(0, 0))));
         bodies.push(body);
-        console.log(body);
+        //console.log(body);
         xPos = dataPoints[dataKeys[i]][x_var];
         yPos = dataPoints[dataKeys[i]][y_var];
 
@@ -91,7 +113,8 @@ function first_draw() {
 
         //console.log("xPos (post number): " + xPos);
         //console.log("yPos (post number): " + yPos);
-        body.setPos(v(xPos, yPos));
+
+        body.setPos(v(xPos * 580/xScale + 20 , yPos * 380/ yScale + 20));
         var circle = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
 
         circle.setElasticity(0.8);

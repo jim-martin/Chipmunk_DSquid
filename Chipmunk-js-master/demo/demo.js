@@ -58,6 +58,12 @@ var Demo = function() {
 		
 			var shape = space.pointQueryFirst(point, GRABABLE_MASK_BIT, cp.NO_GROUP);
 			if(shape){
+                console.log(shape);
+                data_index = shape.body.data_index;
+                console.log(data_index);
+                get_shape_info(data_index);
+
+
 				var body = shape.body;
 				var mouseJoint = self.mouseJoint = new cp.PivotJoint(mouseBody, body, v(0,0), body.world2Local(point));
 

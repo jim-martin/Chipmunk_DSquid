@@ -1,8 +1,11 @@
 var dataPoints = {};
 var headers = [];
 var bodies = [];
+var attractors = [];
 var xScale = 0;
 var yScale = 0;
+
+var view_sequence = [];
 
 xSelect = document.getElementById('xAxis');
 ySelect = document.getElementById('yAxis');
@@ -23,6 +26,7 @@ function clean_datapoint(a){
     a = a.split("$").join("");
     a = a.split("\"").join("");
     a = a.split("%").join("");
+    a = a.split(",").join("");
     if (a == "N/A") //default N/A's to 0
         a = 0;
 
@@ -31,9 +35,21 @@ function clean_datapoint(a){
     return a;
 }
 
+function get_shape_info(index){
+    dataKeys = Object.keys(dataPoints);
+    console.log(dataPoints[dataKeys[index]]);
+}
+
 function redraw_graph() {
     var x_var = xSelect.options[xSelect.selectedIndex].value;
     var y_var = ySelect.options[ySelect.selectedIndex].value;
+
+    var new_view = [];
+    new_view[0] = x_var;
+    new_view[1] = y_var;
+    view_sequence.push(new_view);
+    console.log(view_sequence);
+
     console.log("x_var: " + x_var);
     console.log("y_var: " + y_var);
 
@@ -49,11 +65,6 @@ function redraw_graph() {
         xPos = dataPoints[dataKeys[i]][x_var];
         yPos = dataPoints[dataKeys[i]][y_var];
 
-        xPos = clean_datapoint(xPos);
-        yPos = clean_datapoint(yPos);
-
-        //console.log("xPos (post number): " + xPos);
-        //console.log("yPos (post number): " + yPos);
         //body.setPos(v(xPos, yPos));
         body.setPos(v(xPos * 580/xScale + 20, yPos * 380/ yScale + 20));
     }
@@ -69,11 +80,6 @@ function set_scale(){
         yPos = dataPoints[dataKeys[i]][y_var];
 
 
-        xPos = clean_datapoint(xPos);
-        yPos = clean_datapoint(yPos);
-        console.log(xPos);
-        console.log(yPos);
-
         if(xPos > xScale){
             xScale = xPos;
         }
@@ -81,8 +87,8 @@ function set_scale(){
             yScale = yPos;
         }
     }
-    console.log("xScale: "+xScale);
-    console.log("yScale: "+yScale);
+    //console.log("xScale: "+xScale);
+    //console.log("yScale: "+yScale);
 }
 
 function first_draw() {
@@ -102,17 +108,11 @@ function first_draw() {
         var radius = 5;
         mass = 3;
         var body = space.addBody(new cp.Body(mass, cp.momentForCircle(mass, 0, radius, v(0, 0))));
+        body.data_index = i;
         bodies.push(body);
         //console.log(body);
         xPos = dataPoints[dataKeys[i]][x_var];
         yPos = dataPoints[dataKeys[i]][y_var];
-
-        xPos = clean_datapoint(xPos);
-        yPos = clean_datapoint(yPos);
-
-
-        //console.log("xPos (post number): " + xPos);
-        //console.log("yPos (post number): " + yPos);
 
         body.setPos(v(xPos * 580/xScale + 20 , yPos * 380/ yScale + 20));
         var circle = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
@@ -164,26 +164,134 @@ var Balls = function () {
         success: function (result) {
             console.log(result);
             //parse first line to define fields of object
-            var lines = result.split('\n');
-            console.log(lines[0]);
-            headers = lines[0].split(',');
+            //var lines = result.split('\n');
+            //console.log(lines[0]);
+            //headers = lines[0].split(',');
+
+            csv_array = CSVToArray(result);
+            console.log(csv_array);
 
             //rest of rows parse into dataPoints object
-            for (var i = 1; i < lines.length; i++) {
-                curLine = lines[i].split(',');
+            //for (var i = 1; i < lines.length; i++) {
+            //    curLine = lines[i].split(',');
+            //    console.log(curLine);
+            //    dataPoints[curLine[0]] = {};
+            //    for (var j = 0; j < curLine.length; j++) {
+            //        dataPoints[curLine[0]][headers[j]] = curLine[j];
+            //    }
+            //}
+
+            headers = csv_array[0];
+
+            for(var i = 1; i < csv_array.length; i++){
+                curLine = csv_array[i];
                 dataPoints[curLine[0]] = {};
-                for (var j = 0; j < curLine.length; j++) {
-                    dataPoints[curLine[0]][headers[j]] = curLine[j];
+                for(var j = 0; j < curLine.length; j++){
+                    console.log(curLine[j]);
+                    console.log(clean_datapoint(curLine[j]));
+                    if(j > 0){
+                        dataPoints[curLine[0]][headers[j]] = clean_datapoint(curLine[j]);
+                    }
+                    else{
+                        dataPoints[curLine[0]][headers[j]] = curLine[j];
+                    }
                 }
             }
 
             console.log(dataPoints);
+
 
             //draw the graph
             init_graph();
         }
 
     });
+
+    //from http://www.bennadel.com/blog/1504-ask-ben-parsing-csv-strings-with-javascript-exec-regular-expression-command.htm
+    // This will parse a delimited string into an array of
+    // arrays. The default delimiter is the comma, but this
+    // can be overriden in the second argument.
+    function CSVToArray( strData, strDelimiter ){
+        // Check to see if the delimiter is defined. If not,
+        // then default to comma.
+        strDelimiter = (strDelimiter || ",");
+
+        // Create a regular expression to parse the CSV values.
+        var objPattern = new RegExp(
+            (
+                // Delimiters.
+            "(\\" + strDelimiter + "|\\r?\\n|\\r|^)" +
+
+                // Quoted fields.
+            "(?:\"([^\"]*(?:\"\"[^\"]*)*)\"|" +
+
+                // Standard fields.
+            "([^\"\\" + strDelimiter + "\\r\\n]*))"
+            ),
+            "gi"
+        );
+
+
+        // Create an array to hold our data. Give the array
+        // a default empty first row.
+        var arrData = [[]];
+
+        // Create an array to hold our individual pattern
+        // matching groups.
+        var arrMatches = null;
+
+
+        // Keep looping over the regular expression matches
+        // until we can no longer find a match.
+        while (arrMatches = objPattern.exec( strData )){
+
+            // Get the delimiter that was found.
+            var strMatchedDelimiter = arrMatches[ 1 ];
+
+            // Check to see if the given delimiter has a length
+            // (is not the start of string) and if it matches
+            // field delimiter. If id does not, then we know
+            // that this delimiter is a row delimiter.
+            if (
+                strMatchedDelimiter.length &&
+                (strMatchedDelimiter != strDelimiter)
+            ){
+
+                // Since we have reached a new row of data,
+                // add an empty row to our data array.
+                arrData.push( [] );
+
+            }
+
+
+            // Now that we have our delimiter out of the way,
+            // let's check to see which kind of value we
+            // captured (quoted or unquoted).
+            if (arrMatches[ 2 ]){
+
+                // We found a quoted value. When we capture
+                // this value, unescape any double quotes.
+                var strMatchedValue = arrMatches[ 2 ].replace(
+                    new RegExp( "\"\"", "g" ),
+                    "\""
+                );
+
+            } else {
+
+                // We found a non-quoted value.
+                var strMatchedValue = arrMatches[ 3 ];
+
+            }
+
+
+            // Now that we have our value string, let's add
+            // it to the data array.
+            arrData[ arrData.length - 1 ].push( strMatchedValue );
+        }
+
+        // Return the parsed data.
+        return( arrData );
+    }
 
 
     /*

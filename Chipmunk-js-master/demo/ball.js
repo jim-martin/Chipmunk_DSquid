@@ -118,6 +118,11 @@ function first_draw() {
 
         body.setPos(v(xPos * 580/xScale + 20 , yPos * 380/ yScale + 20));
         var circle = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
+        if(i == target_index){
+            circle.style = function(){
+                return "rgb(255,0,0)";
+            }
+        }
 
         circle.setElasticity(0.8);
         circle.setFriction(0);
@@ -188,14 +193,19 @@ var Balls = function () {
             for(var i = 1; i < csv_array.length; i++){
                 curLine = csv_array[i];
                 dataPoints[curLine[0]] = {};
+                if(curLine[0] == "Shadyside"){
+                    target_index = i;
+                    console.log(target_index);
+                }
                 for(var j = 0; j < curLine.length; j++){
-                    console.log(curLine[j]);
-                    console.log(clean_datapoint(curLine[j]));
+                    //console.log(curLine[j]);
+                    //console.log(clean_datapoint(curLine[j]));
                     if(j > 0){
                         dataPoints[curLine[0]][headers[j]] = clean_datapoint(curLine[j]);
                     }
                     else{
                         dataPoints[curLine[0]][headers[j]] = curLine[j];
+
                     }
                 }
             }

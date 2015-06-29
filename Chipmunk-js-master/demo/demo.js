@@ -10,6 +10,66 @@ var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
 
 var space; //this probably shouldn't be global - Zack
 
+
+var datapoints = [];
+
+//define an attractor joint
+var AttractorJoint = cp.AttractorJoint = function( a, b )
+{
+    cp.Constraint.call(this, a, b);
+};
+
+AttractorJoint.prototype = Object.create(cp.Constraint.prototype);
+
+AttractorJoint.prototype.prestep = function(dt){
+    //can't seem to call this function, or it isn't called. (were does this call come from?)
+};
+
+AttractorJoint.prototype.applyImpulse = function(){
+    var mod = 0.01; //TODO: nonlinear mod based on distance (delta mag)
+    var delta = v.sub(this.a.p, this.b.p);
+    var impulse = this.impulse =  v.mult(delta, mod);
+
+    var r = v(1,1);
+    //apply_impulse(this.b, impulse.x, impulse.y, r); -- not accesible outside of cp
+    this.b.applyImpulse(impulse, r);
+};
+
+AttractorJoint.prototype.getImpulse = function(){
+    return Math.abs(this.impulse);
+};
+
+
+//define a datapoint that contains:
+//	- the shape to be drawn
+//	- a list of attractors
+//	- a list of target bodies (connected to attractors)
+var Datapoint = function( s , targetx, targety ) {
+    var space = this.space = s;
+
+    var radius = this.radius = 4;
+    var mass = this.mass = 3;
+
+    var body = this.body = space.addBody(new cp.Body(mass, cp.momentForCircle(mass, 0, radius, v(0, 0))));
+    body.setPos(v(targetx + 0.1, targety + 0.1)); //this is a hack to ensure the attractor isn't at length 0
+
+    var shape = this.shape = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
+    shape.setElasticity(0.8);
+    shape.setFriction(1);
+
+    //define targetbody
+    var targetBody = this.targetBody = new cp.Body(Infinity, Infinity);
+    targetBody.setPos(v(targetx, targety));
+
+    // //add attractor
+    var attractor = this.attractor = new cp.AttractorJoint(targetBody, body);
+    space.addConstraint(attractor);
+};
+
+Datapoint.prototype.moveTarget = function( x, y ){
+    this.targetBody.setPos(v(x, y));
+};
+
 var Demo = function() {
 	space = this.space = new cp.Space();
 	this.remainder = 0;

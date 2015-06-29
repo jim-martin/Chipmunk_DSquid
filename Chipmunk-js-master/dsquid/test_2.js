@@ -1,6 +1,3 @@
-// This is the utility code to drive the chipmunk demos. The demos are rendered using
-// a single canvas on the page.
-
 var v = cp.v;
 
 var ctx;
@@ -8,7 +5,66 @@ var ctx;
 var GRABABLE_MASK_BIT = 1<<31;
 var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
 
-var Demo = function() {
+var datapoints = [];
+
+//define an attractor joint
+var AttractorJoint = cp.AttractorJoint = function( a, b )
+{
+	cp.Constraint.call(this, a, b);
+};
+
+AttractorJoint.prototype = Object.create(cp.Constraint.prototype);
+
+AttractorJoint.prototype.prestep = function(dt){
+	//can't seem to call this function, or it isn't called. (were does this call come from?)
+};
+
+AttractorJoint.prototype.applyImpulse = function(){
+	var mod = 0.01; //TODO: nonlinear mod based on distance (delta mag)
+	var delta = v.sub(this.a.p, this.b.p);
+	var impulse = this.impulse =  v.mult(delta, mod);
+
+	var r = v(1,1);
+	//apply_impulse(this.b, impulse.x, impulse.y, r); -- not accesible outside of cp
+	this.b.applyImpulse(impulse, r);
+};
+
+AttractorJoint.prototype.getImpulse = function(){
+	return Math.abs(this.impulse);
+};
+
+
+//define a datapoint that contains:
+//	- the shape to be drawn
+//	- a list of attractors
+//	- a list of target bodies (connected to attractors)
+var Datapoint = function( s , targetx, targety ) {
+	var space = this.space = s;
+
+	var radius = this.radius = 4;
+	var mass = this.mass = 3;
+
+	var body = this.body = space.addBody(new cp.Body(mass, cp.momentForCircle(mass, 0, radius, v(0, 0))));
+		body.setPos(v(targetx + 0.1, targety + 0.1)); //this is a hack to ensure the attractor isn't at length 0
+
+	var shape = this.shape = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
+		shape.setElasticity(0.8);
+		shape.setFriction(1);
+
+	//define targetbody
+	var targetBody = this.targetBody = new cp.Body(Infinity, Infinity);
+	targetBody.setPos(v(targetx, targety));
+
+	// //add attractor
+	var attractor = this.attractor = new cp.AttractorJoint(targetBody, body);
+	space.addConstraint(attractor);
+};
+
+Datapoint.prototype.moveTarget = function( x, y ){
+	this.targetBody.setPos(v(x, y));
+};
+
+var Test = function() {
 	var space = this.space = new cp.Space();
 	this.remainder = 0;
 	this.fps = 0;
@@ -26,25 +82,14 @@ var Demo = function() {
 	};
 
 	// HACK HACK HACK - its awful having this here, and its going to break when we
-	// have multiple demos open at the same time.
+	// have multiple tests open at the same time.
 	this.canvas.onmousemove = function(e) {
 		self.mouse = canvas2point(e.clientX, e.clientY);
 	};
 
-	/*
-	this.canvas.onmousedown = function(e) {
-		radius = 10;
-		mass = 3;
-		body = space.addBody(new cp.Body(mass, cp.momentForCircle(mass, 0, radius, v(0, 0))));
-		body.setPos(canvas2point(e.clientX, e.clientY));
-		circle = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
-		circle.setElasticity(0.5);
-		return circle.setFriction(1);
-	};*/
-
 	var mouseBody = this.mouseBody = new cp.Body(Infinity, Infinity);
 
-	this.canvas.oncontextmenu = function(e) { return false; }
+	this.canvas.oncontextmenu = function(e) { return false; };
 
 	this.canvas.onmousedown = function(e) {
 		e.preventDefault();
@@ -62,6 +107,38 @@ var Demo = function() {
 				mouseJoint.maxForce = 50000;
 				mouseJoint.errorBias = Math.pow(1 - 0.15, 60);
 				space.addConstraint(mouseJoint);
+			}else{
+				//get all the bodies
+				self.targetBodies = [];
+				space.eachBody(function(body){
+					self.targetBodies.push(body);
+				});
+
+				self.targetShapes = [];
+				space.eachShape(function(shape){
+					self.targetShapes.push(shape);
+				});
+
+				//turn off collisions by placing each body on it's own collision layer
+				for (var i = 0; i < self.targetShapes.length; i++) {
+					self.targetShapes[i].setLayers(0);
+				}
+
+				//define attractors as constraints
+				self.mouseAttractors = [];
+				for (var i = 0; i < self.targetBodies.length; i++) {
+					var mouseAttractor = new cp.AttractorJoint(mouseBody, self.targetBodies[i]);
+					self.mouseAttractors.push(mouseAttractor);
+					space.addConstraint(self.mouseAttractors[i]);
+				}
+
+				self.targetBodies = null;
+
+				for (var i = 0; i < datapoints.length; i++) {
+					var p = self.canvas2point(Math.random()*canvas.width, Math.random()*canvas.height);
+					datapoints[i].moveTarget(p.x, p.y);
+				};
+
 			}
 		}
 
@@ -79,33 +156,39 @@ var Demo = function() {
 				space.removeConstraint(self.mouseJoint);
 				self.mouseJoint = null;
 			}
+
+			if(self.mouseAttractors){
+				for (var i = 0; i < self.mouseAttractors.length; i++) {
+					space.removeConstraint(self.mouseAttractors[i]);
+					self.mouseAttractors[i] = null;
+				}
+				self.mouseAttractors = null;
+
+				for (var i = 0; i < self.targetShapes.length; i++) {
+					self.targetShapes[i].setLayers(GRABABLE_MASK_BIT);
+				}
+			}
 		}
 
 		if(rightclick) {
 			self.rightClick = false;
 		}
 	};
-
 };
 
-var canvas = Demo.prototype.canvas = document.getElementsByTagName('canvas')[0];
-
-var ctx = Demo.prototype.ctx = canvas.getContext('2d');
-
-// The physics space size is 640x480, with the origin in the bottom left.
-// Its really an arbitrary number except for the ratio - everything is done
-// in floating point maths anyway.
+var canvas = Test.prototype.canvas = document.getElementsByTagName('canvas')[0];
+var ctx = Test.prototype.ctx = canvas.getContext('2d');
 
 window.onresize = function(e) {
-	var width = Demo.prototype.width = canvas.width = window.innerWidth;
-	var height = Demo.prototype.height = canvas.height = window.innerHeight;
+	var width = Test.prototype.width = canvas.width = window.innerWidth;
+	var height = Test.prototype.height = canvas.height = window.innerHeight;
 	if (width/height > 640/480) {
-		Demo.prototype.scale = height / 480;
+		Test.prototype.scale = height / 480;
 	} else {
-		Demo.prototype.scale = width / 640;
+		Test.prototype.scale = width / 640;
 	}
 
-	Demo.resized = true;
+	Test.resized = true;
 };
 window.onresize();
 
@@ -118,12 +201,12 @@ var raf = window.requestAnimationFrame
 		return window.setTimeout(callback, 1000 / 60);
 	};
 
-// These should be overridden by the demo itself.
-Demo.prototype.update = function(dt) {
+// These should be overridden by the test itself.
+Test.prototype.update = function(dt) {
 	this.space.step(dt);
 };
 
-Demo.prototype.drawInfo = function() {
+Test.prototype.drawInfo = function() {
 	var space = this.space;
 
 	var maxWidth = this.width - 20;
@@ -157,7 +240,7 @@ Demo.prototype.drawInfo = function() {
 	}
 };
 
-Demo.prototype.draw = function() {
+Test.prototype.draw = function() {
 	var ctx = this.ctx;
 
 	var self = this;
@@ -175,7 +258,7 @@ Demo.prototype.draw = function() {
 	});
 
 	// Draw collisions
-  /*
+/*  
 	ctx.strokeStyle = "red";
 	ctx.lineWidth = 2;
 
@@ -205,6 +288,14 @@ Demo.prototype.draw = function() {
 		ctx.stroke();
 	}
 
+	if (this.mouseAttractors){
+		ctx.beginPath();
+		var c = this.point2canvas(this.mouseBody.p);
+		var radius = 20.0;
+		ctx.arc(c.x, c.y, radius, 0, 2*Math.PI, false);
+		ctx.stroke();
+	}
+
 	this.space.eachConstraint(function(c) {
 		if(c.draw) {
 			c.draw(ctx, self.scale, self.point2canvas);
@@ -214,7 +305,7 @@ Demo.prototype.draw = function() {
 	this.drawInfo();
 };
 
-Demo.prototype.run = function() {
+Test.prototype.run = function() {
 	this.running = true;
 
 	var self = this;
@@ -234,7 +325,7 @@ Demo.prototype.run = function() {
 
 var soon = function(fn) { setTimeout(fn, 1); };
 
-Demo.prototype.benchmark = function() {
+Test.prototype.benchmark = function() {
 	this.draw();
 
 	var self = this;
@@ -251,11 +342,11 @@ Demo.prototype.benchmark = function() {
 	});
 };
 
-Demo.prototype.stop = function() {
+Test.prototype.stop = function() {
 	this.running = false;
 };
 
-Demo.prototype.step = function(dt) {
+Test.prototype.step = function(dt) {
 	// Update FPS
 	if(dt > 0) {
 		this.fps = 0.9*this.fps + 0.1*(1000/dt);
@@ -273,33 +364,12 @@ Demo.prototype.step = function(dt) {
 	this.simulationTime += Date.now() - now;
 
 	// Only redraw if the simulation isn't asleep.
-	if (lastNumActiveShapes > 0 || Demo.resized) {
+	if (lastNumActiveShapes > 0 || Test.resized) {
 		now = Date.now();
 		this.draw();
 		this.drawTime += Date.now() - now;
-		Demo.resized = false;
+		Test.resized = false;
 	}
-};
-
-Demo.prototype.addFloor = function() {
-	var space = this.space;
-	var floor = space.addShape(new cp.SegmentShape(space.staticBody, v(0, 0), v(640, 0), 0));
-	floor.setElasticity(1);
-	floor.setFriction(1);
-	floor.setLayers(NOT_GRABABLE_MASK);
-};
-
-Demo.prototype.addWalls = function() {
-	var space = this.space;
-	var wall1 = space.addShape(new cp.SegmentShape(space.staticBody, v(0, 0), v(0, 480), 0));
-	wall1.setElasticity(1);
-	wall1.setFriction(1);
-	wall1.setLayers(NOT_GRABABLE_MASK);
-
-	var wall2 = space.addShape(new cp.SegmentShape(space.staticBody, v(640, 0), v(640, 480), 0));
-	wall2.setElasticity(1);
-	wall2.setFriction(1);
-	wall2.setLayers(NOT_GRABABLE_MASK);
 };
 
 // Drawing helper methods
@@ -320,55 +390,6 @@ var drawLine = function(ctx, point2canvas, a, b) {
 	ctx.lineTo(b.x, b.y);
 	ctx.stroke();
 };
-
-var drawRect = function(ctx, point2canvas, pos, size) {
-	var pos_ = point2canvas(pos);
-	var size_ = cp.v.sub(point2canvas(cp.v.add(pos, size)), pos_);
-	ctx.fillRect(pos_.x, pos_.y, size_.x, size_.y);
-};
-
-var springPoints = [
-	v(0.00, 0.0),
-	v(0.20, 0.0),
-	v(0.25, 3.0),
-	v(0.30,-6.0),
-	v(0.35, 6.0),
-	v(0.40,-6.0),
-	v(0.45, 6.0),
-	v(0.50,-6.0),
-	v(0.55, 6.0),
-	v(0.60,-6.0),
-	v(0.65, 6.0),
-	v(0.70,-3.0),
-	v(0.75, 6.0),
-	v(0.80, 0.0),
-	v(1.00, 0.0)
-];
-
-var drawSpring = function(ctx, scale, point2canvas, a, b) {
-	a = point2canvas(a); b = point2canvas(b);
-	
-	ctx.beginPath();
-	ctx.moveTo(a.x, a.y);
-
-	var delta = v.sub(b, a);
-	var len = v.len(delta);
-	var rot = v.mult(delta, 1/len);
-
-	for(var i = 1; i < springPoints.length; i++) {
-
-		var p = v.add(a, v.rotate(v(springPoints[i].x * len, springPoints[i].y * scale), rot));
-
-		//var p = v.add(a, v.rotate(springPoints[i], delta));
-		
-		ctx.lineTo(p.x, p.y);
-	}
-
-	ctx.stroke();
-};
-
-
-// **** Draw methods for Shapes
 
 cp.PolyShape.prototype.draw = function(ctx, scale, point2canvas)
 {
@@ -401,57 +422,6 @@ cp.CircleShape.prototype.draw = function(ctx, scale, point2canvas) {
 	drawLine(ctx, point2canvas, this.tc, cp.v.mult(this.body.rot, this.r).add(this.tc));
 };
 
-
-// Draw methods for constraints
-
-cp.PinJoint.prototype.draw = function(ctx, scale, point2canvas) {
-	var a = this.a.local2World(this.anchr1);
-	var b = this.b.local2World(this.anchr2);
-	
-	ctx.lineWidth = 2;
-	ctx.strokeStyle = "grey";
-	drawLine(ctx, point2canvas, a, b);
-};
-
-cp.SlideJoint.prototype.draw = function(ctx, scale, point2canvas) {
-	var a = this.a.local2World(this.anchr1);
-	var b = this.b.local2World(this.anchr2);
-	var midpoint = v.add(a, v.clamp(v.sub(b, a), this.min));
-
-	ctx.lineWidth = 2;
-	ctx.strokeStyle = "grey";
-	drawLine(ctx, point2canvas, a, b);
-	ctx.strokeStyle = "red";
-	drawLine(ctx, point2canvas, a, midpoint);
-};
-
-cp.PivotJoint.prototype.draw = function(ctx, scale, point2canvas) {
-	var a = this.a.local2World(this.anchr1);
-	var b = this.b.local2World(this.anchr2);
-	ctx.strokeStyle = "grey";
-	ctx.fillStyle = "grey";
-	drawCircle(ctx, scale, point2canvas, a, 2);
-	drawCircle(ctx, scale, point2canvas, b, 2);
-};
-
-cp.GrooveJoint.prototype.draw = function(ctx, scale, point2canvas) {
-	var a = this.a.local2World(this.grv_a);
-	var b = this.a.local2World(this.grv_b);
-	var c = this.b.local2World(this.anchr2);
-	
-	ctx.strokeStyle = "grey";
-	drawLine(ctx, point2canvas, a, b);
-	drawCircle(ctx, scale, point2canvas, c, 3);
-};
-
-cp.DampedSpring.prototype.draw = function(ctx, scale, point2canvas) {
-	var a = this.a.local2World(this.anchr1);
-	var b = this.b.local2World(this.anchr2);
-
-	ctx.strokeStyle = "grey";
-	drawSpring(ctx, scale, point2canvas, a, b);
-};
-
 var randColor = function() {
   return Math.floor(Math.random() * 256);
 };
@@ -460,8 +430,6 @@ var styles = [];
 for (var i = 0; i < 100; i++) {
 	styles.push("rgb(" + randColor() + ", " + randColor() + ", " + randColor() + ")");
 }
-
-//styles = ['rgba(255,0,0,0.5)', 'rgba(0,255,0,0.5)', 'rgba(0,0,255,0.5)'];
 
 cp.Shape.prototype.style = function() {
   var body;
@@ -479,44 +447,27 @@ cp.Shape.prototype.style = function() {
   }
 };
 
-var demos = [];
-var addDemo = function(name, demo) {
-	demos.push({name:name, demo:demo});
-};
-
 
 var Balls = function() {
-	Demo.call(this);
+	Test.call(this);
 
 	var space = this.space;
 	space.iterations = 60;
-	space.gravity = v(0, -500);
+	space.gravity = v(0, 0);
+	space.damping = .001;
 	space.sleepTimeThreshold = 0.5;
 	space.collisionSlop = 0.5;
 	space.sleepTimeThreshold = 0.5;
 
-	this.addFloor();
-	this.addWalls();
 
-	var width = 50;
-	var height = 60;
-	var mass = width * height * 1/1000;
-	var rock = space.addBody(new cp.Body(mass, cp.momentForBox(mass, width, height)));
-	rock.setPos(v(500, 100));
-	rock.setAngle(1);
-	shape = space.addShape(new cp.BoxShape(rock, width, height));
-	shape.setFriction(0.3);
-	shape.setElasticity(0.3);
-
-	for (var i = 1; i <= 10; i++) {
-		var radius = 20;
-		mass = 3;
-		var body = space.addBody(new cp.Body(mass, cp.momentForCircle(mass, 0, radius, v(0, 0))));
-		body.setPos(v(200 + i, (2 * radius + 5) * i));
-		var circle = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
-		circle.setElasticity(0.8);
-		circle.setFriction(1);
+	for (var i = 1; i <= 100; i++) {
+		var p = this.canvas2point(Math.random()*canvas.width, Math.random()*canvas.height);
+		console.log(p);
+		var point = new Datapoint(this.space, p.x, p.y);
+		datapoints.push(point);
 	}
+
+
 /*
  * atom.canvas.onmousedown = function(e) {
       radius = 10;
@@ -528,16 +479,6 @@ var Balls = function() {
       return circle.setFriction(1);
     };
 */
-
-	this.ctx.strokeStyle = "black";
-
-	var ramp = space.addShape(new cp.SegmentShape(space.staticBody, v(100, 100), v(300, 200), 10));
-	ramp.setElasticity(1);
-	ramp.setFriction(1);
-	ramp.setLayers(NOT_GRABABLE_MASK);
 };
 
-Balls.prototype = Object.create(Demo.prototype);
-
-addDemo('Balls', Balls);
-
+Balls.prototype = Object.create(Test.prototype);

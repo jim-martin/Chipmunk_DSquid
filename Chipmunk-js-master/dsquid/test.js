@@ -33,6 +33,36 @@ AttractorJoint.prototype.getImpulse = function(){
 };
 
 
+//define a datapoint that contains:
+//	- the shape to be drawn
+//	- a list of attractors
+//	- a list of target bodies (connected to attractors)
+var Datapoint = function( s , targetx, targety ) {
+	var space = this.space = s;
+
+	var radius = this.radius = 4;
+	var mass = this.mass = 3;
+
+	var body = this.body = space.addBody(new cp.Body(mass, cp.momentForCircle(mass, 0, radius, v(0, 0))));
+		body.setPos(v(targetx, targety));
+
+	this.shape = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
+		shape.setElasticity(0.8);
+		shape.setFriction(1);
+
+	//define targetbody
+	var targetBody = this.targetBody = new cp.Body(Infinity, Infinity);
+	targetBody.setPos(v(targetx, targety));
+
+	//add attractor
+	var attractor = this.attractor = new cp.AttractorJoint(targetBody, body);
+	space.addConstraint(attractor);
+};
+
+Datapoint.prototype.moveTarget = function( x, y ){
+	this.targetBody.setPos(v(x, y));
+};
+
 var Test = function() {
 	var space = this.space = new cp.Space();
 	this.remainder = 0;
@@ -128,7 +158,7 @@ var Test = function() {
 				self.mouseAttractors = null;
 
 				for (var i = 0; i < self.targetShapes.length; i++) {
-					self.targetShapes[i].setLayers(1);
+					self.targetShapes[i].setLayers(GRABABLE_MASK_BIT);
 				}
 			}
 		}
@@ -435,6 +465,8 @@ var demos = [];
 var addTest = function(name, demo) {
 	demos.push({name:name, demo:demo});
 };
+
+
 
 var Balls = function() {
 	Test.call(this);

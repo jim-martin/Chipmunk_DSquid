@@ -7,10 +7,17 @@ var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
 
 var datapoints = [];
 
+
+//utility function to call 'fn' with a delay (prolly shouldn't be global...)
+var soon = function(fn) { setTimeout(fn, 1); };
+
+
 //define an attractor joint
 var AttractorJoint = cp.AttractorJoint = function( a, b )
 {
 	cp.Constraint.call(this, a, b);
+
+	this.maxForce = 0.01;
 };
 
 AttractorJoint.prototype = Object.create(cp.Constraint.prototype);
@@ -20,9 +27,9 @@ AttractorJoint.prototype.prestep = function(dt){
 };
 
 AttractorJoint.prototype.applyImpulse = function(){
-	var mod = 0.01; //TODO: nonlinear mod based on distance (delta mag)
+//	var mod = 0.01; //TODO: nonlinear mod based on distance (delta mag)
 	var delta = v.sub(this.a.p, this.b.p);
-	var impulse = this.impulse =  v.mult(delta, mod);
+	var impulse = this.impulse =  v.mult(delta, this.maxForce);
 
 	var r = v(1,1);
 	//apply_impulse(this.b, impulse.x, impulse.y, r); -- not accesible outside of cp
@@ -35,9 +42,9 @@ AttractorJoint.prototype.getImpulse = function(){
 
 
 //define a datapoint that contains:
-//	- the shape to be drawn
-//	- a list of attractors
-//	- a list of target bodies (connected to attractors)
+//	- the shape/body to be drawn
+//	- an attractor that connects the shape/body to the targetBody
+//	- a targetBody that represents the proper location of the data(connected to attractor)
 var Datapoint = function( s , targetx, targety ) {
 	var space = this.space = s;
 
@@ -45,7 +52,7 @@ var Datapoint = function( s , targetx, targety ) {
 	var mass = this.mass = 3;
 
 	var body = this.body = space.addBody(new cp.Body(mass, cp.momentForCircle(mass, 0, radius, v(0, 0))));
-		body.setPos(v(targetx + 0.1, targety + 0.1)); //this is a hack to ensure the attractor isn't at length 0
+		body.setPos(v(targetx + 0.1, targety + 0.1)); //this is a hack to ensure the attractor isn't at length 0 
 
 	var shape = this.shape = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
 		shape.setElasticity(0.8);
@@ -72,7 +79,7 @@ var Test = function() {
 	this.simulationTime = 0;
 	this.drawTime = 0;
 
-	var self = this;
+ 	var self = this;
 	var canvas2point = this.canvas2point = function(x, y) {
 		return v(x / self.scale, 480 - y / self.scale);
 	};
@@ -104,7 +111,7 @@ var Test = function() {
 				var body = shape.body;
 				var mouseJoint = self.mouseJoint = new cp.PivotJoint(mouseBody, body, v(0,0), body.world2Local(point));
 
-				mouseJoint.maxForce = 50000;
+				mouseJoint.maxForce = 5000;
 				mouseJoint.errorBias = Math.pow(1 - 0.15, 60);
 				space.addConstraint(mouseJoint);
 			}else{
@@ -114,36 +121,30 @@ var Test = function() {
 					self.targetBodies.push(body);
 				});
 
-				self.targetShapes = [];
-				space.eachShape(function(shape){
-					self.targetShapes.push(shape);
-				});
-
-				//turn off collisions by placing each body on it's own collision layer
-				for (var i = 0; i < self.targetShapes.length; i++) {
-					self.targetShapes[i].setLayers(0);
-				}
 
 				//define attractors as constraints
 				self.mouseAttractors = [];
 				for (var i = 0; i < self.targetBodies.length; i++) {
 					var mouseAttractor = new cp.AttractorJoint(mouseBody, self.targetBodies[i]);
+					mouseAttractor.maxForce *= 5;
 					self.mouseAttractors.push(mouseAttractor);
 					space.addConstraint(self.mouseAttractors[i]);
 				}
 
 				self.targetBodies = null;
 
-				for (var i = 0; i < datapoints.length; i++) {
-					var p = self.canvas2point(Math.random()*canvas.width, Math.random()*canvas.height);
-					datapoints[i].moveTarget(p.x, p.y);
-				};
-
 			}
 		}
 
 		if(rightclick) {
 			self.rightClick = true;
+
+			self.beginTransition();
+			for (var i = 0; i < datapoints.length; i++) {
+				var p = self.canvas2point(Math.random()*canvas.width, Math.random()*canvas.height);
+				datapoints[i].moveTarget(p.x, p.y);
+			}
+
 		}
 	};
 
@@ -163,10 +164,6 @@ var Test = function() {
 					self.mouseAttractors[i] = null;
 				}
 				self.mouseAttractors = null;
-
-				for (var i = 0; i < self.targetShapes.length; i++) {
-					self.targetShapes[i].setLayers(GRABABLE_MASK_BIT);
-				}
 			}
 		}
 
@@ -323,8 +320,6 @@ Test.prototype.run = function() {
 	step(0);
 };
 
-var soon = function(fn) { setTimeout(fn, 1); };
-
 Test.prototype.benchmark = function() {
 	this.draw();
 
@@ -371,6 +366,63 @@ Test.prototype.step = function(dt) {
 		Test.resized = false;
 	}
 };
+
+Test.prototype.beginTransition = function(){
+	console.log(this);
+
+	var self = this;
+	var targetShapes = [];
+	this.space.eachShape(function(shape){
+		targetShapes.push(shape);
+	});
+
+	//turn off collisions by placing each body on the 0 collision layer
+	for (var i = 0; i < targetShapes.length; i++) {
+		targetShapes[i].setLayers(0);
+	}
+
+	var fn = function(){
+		self.endTransitionOnRest();
+	};
+	setTimeout(fn, 1000);
+};
+
+Test.prototype.endTransitionOnRest = function(){
+	
+	var self = this;
+	var velocityThresh = 5;
+	var lowVec = v(10000,10000); //hack to start the iterator off right
+
+	var targetShapes = [];
+	this.space.eachShape(function(shape){
+		targetShapes.push(shape);
+	});
+
+	var fn = function(){
+		self.endTransitionOnRest();
+	};
+
+	//check the speed of the bodies in question, store the fastest one.
+	for (var i = 0; i < targetShapes.length; i++) {
+		var tempVec = v(targetShapes[i].body.vx, targetShapes[i].body.vy);
+		if (v.lengthsq(tempVec) < v.lengthsq(lowVec)){
+			lowVec = tempVec;
+		}
+	}
+
+	if(v.lengthsq(lowVec) < velocityThresh){
+		for (var i = 0; i < targetShapes.length; i++) {
+			targetShapes[i].setLayers(GRABABLE_MASK_BIT);
+		}
+		console.log("transition complete");
+	}else{
+		setTimeout(fn, 1000);
+		console.log("transition continuing");
+	}
+
+
+};
+
 
 // Drawing helper methods
 

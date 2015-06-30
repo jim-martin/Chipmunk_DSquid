@@ -40,6 +40,30 @@
         background-color:white;
 	}
 
+    #picker{
+        z-axis:10;
+        position:fixed;
+        width:80%;
+        height:400px;
+        background:rgba(255,255,255,.8);
+        border:1px solid #888;
+        display:none;
+        margin:20px 10%;
+        overflow-y:scroll;
+    }
+
+    th,
+    td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #E1E1E1; }
+    th:first-child,
+    td:first-child {
+        padding-left: 0; }
+    th:last-child,
+    td:last-child {
+        padding-right: 0; }
+
 </style>
 <div id="tabbar"></div>
 <div>
@@ -47,8 +71,14 @@ xAxis
 <select id="xAxis" onchange="position_points();"></select>
 yAxis
 <select id="yAxis" onchange="position_points();"></select>
+    <span onclick="open_picker();">Change Axes</span>
 </div>
 <canvas></canvas>
+
+<div id="picker">
+
+</div>
+
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script src="../cp.js"></script>
 <script src="demo.js"></script>

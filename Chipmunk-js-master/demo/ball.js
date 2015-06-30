@@ -9,8 +9,16 @@ var target_index;
 
 var view_sequence = [];
 
+var undo_stack = [];
+
 xSelect = document.getElementById('xAxis');
 ySelect = document.getElementById('yAxis');
+var colorDim;
+var sizeDim;
+var xDim;
+var yDim;
+
+var picker = $("#picker");
 
 function init_graph() {
     //draw two selectors for axes
@@ -18,9 +26,63 @@ function init_graph() {
         xSelect.options[i - 1] = new Option(headers[i], headers[i]);
         ySelect.options[i - 1] = new Option(headers[i], headers[i]);
     }
+    xDim = headers[1];
+    yDim = headers[2];
+
+
+    populate_picker();
 
     //change one of them to not be sector #
     position_points();
+}
+
+function populate_picker(){
+    //create table
+    //field
+
+    console.log("populating picker");
+    picker.html("<table width='100%'><tbody id='picker_body'><tr><th>Field</th><th>X-Axis</th><th>Y-Axis</th><th>Size</th><th>Color</th></tr></tbody></table>");
+    var picker_body = $("#picker_body");
+
+    //add a row to picker for each header field
+    for(var i = 1; i < headers.length; i++){
+        picker_body.append("<tr><td>"+headers[i]+"</td><td class='column1'></td><td class='column2'></td><td class='column3'></td><td class='column4'></td></tr>")
+    }
+
+    $("td").on("click", function(){
+        //get class
+        //set all of that class to background clear
+        if($(this).hasClass("column1")){
+            $(".column1").css({"background":"none"});
+        }
+        if($(this).hasClass("column2")){
+            $(".column2").css({"background":"none"});
+        }
+        if($(this).hasClass("column3")){
+            $(".column3").css({"background":"none"});
+        }
+        if($(this).hasClass("column4")){
+            $(".column4").css({"background":"none"});
+        }
+
+        //set the clicked cell to have a background
+        $(this).css({"background":"rgba(82, 203, 239, 0.8)"});
+
+        if($(this).hasClass("column1")){
+            xDim = $(this).siblings()[0].innerHTML;
+        }
+        if($(this).hasClass("column2")){
+            yDim = $(this).siblings()[0].innerHTML;
+        }
+        if($(this).hasClass("column3")){
+            sizeDim = $(this).siblings()[0].innerHTML;
+        }
+        if($(this).hasClass("column4")){
+            colorDim = $(this).siblings()[0].innerHTML;
+        }
+
+        position_points();
+    })
 }
 
 function clean_datapoint(a){
@@ -44,8 +106,10 @@ function get_shape_info(index){
 
 //rescale
 function set_scale(){
-    var x_var = xSelect.options[xSelect.selectedIndex].value;
-    var y_var = ySelect.options[ySelect.selectedIndex].value;
+    //var x_var = xSelect.options[xSelect.selectedIndex].value;
+    var x_var = xDim;
+    //var y_var = ySelect.options[ySelect.selectedIndex].value;
+    var y_var = yDim;
     xScale = 0;
     yScale = 0;
 
@@ -66,10 +130,20 @@ function set_scale(){
 }
 
 function position_points() {
-    var x_var = xSelect.options[xSelect.selectedIndex].value;
-    var y_var = ySelect.options[ySelect.selectedIndex].value;
-    console.log("x_var: " + x_var);
-    console.log("y_var: " + y_var);
+    //var x_var = xSelect.options[xSelect.selectedIndex].value;
+    //var y_var = ySelect.options[ySelect.selectedIndex].value;
+
+    var x_var = xDim;
+    var y_var = yDim;
+
+    //console.log("x_var: " + x_var);
+    //console.log("y_var: " + y_var);
+
+    //var new_view = [];
+    //new_view[0] = x_var;
+    //new_view[1] = y_var;
+    //view_sequence.push(new_view);
+    //console.log(view_sequence);
 
     dataKeys = Object.keys(pointsData);
 
@@ -80,6 +154,45 @@ function position_points() {
         yPos = datapoints[i].fields[y_var];
         datapoints[i].moveTarget(xPos * 580/xScale + 20, yPos * 380/ yScale + 20);
     }
+}
+
+function push_view(){
+    //push new ViewCommand with
+    //new axes
+    //old axes
+    var new_view = [];
+    new_view[0] = x_var;
+    new_view[1] = y_var;
+
+    //how do you get these?
+    var old_view = [];
+    old_view[0] = '';
+    old_view[1] = '';
+
+    var new_view_command = new ViewCommand(new_view, old_view);
+    new_view_command.execute();
+    undo_stack.push(new_view_command);
+}
+
+var ViewCommand = function(new_view, old_view){
+    this.new_view = new_view;
+    this.old_view = old_view;
+
+    this.execute = execute;
+    this.undo = undo;
+}
+
+
+function open_picker(){
+    console.log("open picker");
+    if(picker.css("display") == "block"){
+        picker.css({"display":"none"});
+    }
+    else{
+        picker.css({"display":"block"});
+    }
+
+
 }
 
 var Balls = function () {

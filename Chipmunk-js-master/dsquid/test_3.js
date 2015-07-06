@@ -115,23 +115,9 @@ var Test = function() {
 				mouseJoint.errorBias = Math.pow(1 - 0.15, 60);
 				space.addConstraint(mouseJoint);
 			}else{
-				//get all the bodies
-				self.targetBodies = [];
-				space.eachBody(function(body){
-					self.targetBodies.push(body);
-				});
 
-
-				//define attractors as constraints
-				self.mouseAttractors = [];
-				for (var i = 0; i < self.targetBodies.length; i++) {
-					var mouseAttractor = new cp.AttractorJoint(mouseBody, self.targetBodies[i]);
-					mouseAttractor.maxForce *= 5;
-					self.mouseAttractors.push(mouseAttractor);
-					space.addConstraint(self.mouseAttractors[i]);
-				}
-
-				self.targetBodies = null;
+				//log start point of selection (also servers as bool for draw call)
+				self.selecitonStart = self.mouse;
 
 			}
 		}
@@ -158,7 +144,7 @@ var Test = function() {
 				self.mouseJoint = null;
 			}
 
-			if(self.mouseAttractors){
+			if(self.selecitonStart){
 				for (var i = 0; i < self.mouseAttractors.length; i++) {
 					space.removeConstraint(self.mouseAttractors[i]);
 					self.mouseAttractors[i] = null;

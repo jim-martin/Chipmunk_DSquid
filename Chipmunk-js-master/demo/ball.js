@@ -4,6 +4,8 @@ var bodies = [];
 var attractors = [];
 var xScale = 0;
 var yScale = 0;
+var colorScale = 0;
+var sizeScale = 0;
 
 var target_index;
 
@@ -11,8 +13,6 @@ var view_sequence = [];
 
 var undo_stack = [];
 
-xSelect = document.getElementById('xAxis');
-ySelect = document.getElementById('yAxis');
 var colorDim;
 var sizeDim;
 var xDim;
@@ -22,10 +22,6 @@ var picker = $("#picker");
 
 function init_graph() {
     //draw two selectors for axes
-    for (var i = 1; i < headers.length; i++) {
-        xSelect.options[i - 1] = new Option(headers[i], headers[i]);
-        ySelect.options[i - 1] = new Option(headers[i], headers[i]);
-    }
     xDim = headers[1];
     yDim = headers[2];
 
@@ -106,16 +102,21 @@ function get_shape_info(index){
 
 //rescale
 function set_scale(){
-    //var x_var = xSelect.options[xSelect.selectedIndex].value;
     var x_var = xDim;
-    //var y_var = ySelect.options[ySelect.selectedIndex].value;
     var y_var = yDim;
+    var color_var = colorDim;
+    var size_var = sizeDim;
     xScale = 0;
     yScale = 0;
+    colorScale = 0;
+    sizeScale = 0;
+
 
     for (var i = 0; i < datapoints.length; i++) {
-        xPos = datapoints[i].fields[x_var];
-        yPos = datapoints[i].fields[y_var];
+        var xPos = datapoints[i].fields[x_var];
+        var yPos = datapoints[i].fields[y_var];
+        var colorPos = datapoints[i].fields[color_var];
+        var sizePos = datapoints[i].fields[size_var];
 
 
         if(xPos > xScale){
@@ -124,36 +125,64 @@ function set_scale(){
         if(yPos > yScale){
             yScale = yPos;
         }
+        if(colorPos > colorScale){
+            colorScale = colorPos;
+        }
+        if(sizePos > sizeScale){
+            sizeScale = sizePos;
+        }
     }
     //console.log("xScale: "+xScale);
     //console.log("yScale: "+yScale);
 }
 
 function position_points() {
-    //var x_var = xSelect.options[xSelect.selectedIndex].value;
-    //var y_var = ySelect.options[ySelect.selectedIndex].value;
 
     var x_var = xDim;
     var y_var = yDim;
+    var color_var = colorDim;
+    var size_var = sizeDim;
 
-    //console.log("x_var: " + x_var);
-    //console.log("y_var: " + y_var);
 
-    //var new_view = [];
-    //new_view[0] = x_var;
-    //new_view[1] = y_var;
-    //view_sequence.push(new_view);
-    //console.log(view_sequence);
 
-    dataKeys = Object.keys(pointsData);
 
     set_scale();
 
     for (var i = 0; i < datapoints.length; i++) {
-        xPos = datapoints[i].fields[x_var];
-        yPos = datapoints[i].fields[y_var];
+        var xPos = datapoints[i].fields[x_var];
+        var yPos = datapoints[i].fields[y_var];
         datapoints[i].moveTarget(xPos * 580/xScale + 20, yPos * 380/ yScale + 20);
+
+        //set color
+        if(typeof(color_var) != "undefined"){
+            //point.body.style()
+            var colorPos = datapoints[i].fields[color_var];
+            var colorString = "rgb("+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+")";
+            //console.log(colorString);
+
+
+            datapoints[i].shape.colorstring = colorString;
+
+            newstyle = function(){
+                return this.colorstring;
+            }
+            datapoints[i].redraw(newstyle);
+        }
+
+        //set size
+        if(typeof(size_var) != "undefined"){
+            var max_radius = 10;
+            var min_radius = 3;
+
+
+            var sizePos = datapoints[i].fields[size_var];
+            datapoints[i].radius = Math.round(sizePos / sizeScale * 7) + 3;
+
+        }
+
+
     }
+    console.log(datapoints);
 }
 
 function push_view(){
@@ -183,13 +212,20 @@ var ViewCommand = function(new_view, old_view){
 }
 
 
+var temp_view = [];
 function open_picker(){
     console.log("open picker");
     if(picker.css("display") == "block"){
         picker.css({"display":"none"});
+
+        //if temp != current axes
+        //push command object
+
     }
     else{
         picker.css({"display":"block"});
+
+        //push current axes to temp variables
     }
 
 

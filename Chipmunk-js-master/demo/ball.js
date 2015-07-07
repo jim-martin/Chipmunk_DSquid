@@ -13,8 +13,6 @@ var view_sequence = [];
 
 var undo_stack = [];
 
-xSelect = document.getElementById('xAxis');
-ySelect = document.getElementById('yAxis');
 var colorDim;
 var sizeDim;
 var xDim;
@@ -24,10 +22,6 @@ var picker = $("#picker");
 
 function init_graph() {
     //draw two selectors for axes
-    for (var i = 1; i < headers.length; i++) {
-        xSelect.options[i - 1] = new Option(headers[i], headers[i]);
-        ySelect.options[i - 1] = new Option(headers[i], headers[i]);
-    }
     xDim = headers[1];
     yDim = headers[2];
 

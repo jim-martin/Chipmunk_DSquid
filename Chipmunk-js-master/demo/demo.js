@@ -70,6 +70,29 @@ Datapoint.prototype.moveTarget = function( x, y ){
     this.targetBody.setPos(v(x, y));
 };
 
+Datapoint.prototype.redraw = function(style){
+    var space = this.space;
+    var shape = this.shape;
+
+    var colorstring = shape.colorstring;
+
+    //console.log(space);
+    space.removeShape(this.shape);
+
+    var redrawing_shape = new cp.CircleShape(this.body, this.radius, v(0,0));
+    //redrawing_shape.style = style;
+    //console.log(redrawing_shape.style());
+    redrawing_shape.colorstring = colorstring;
+
+    redrawing_shape.style = function(){
+        return this.colorstring;
+    }
+
+    this.shape = space.addShape(redrawing_shape);
+    shape.setElasticity(0.8);
+    shape.setFriction(1);
+}
+
 var Demo = function() {
 	space = this.space = new cp.Space();
 	this.remainder = 0;
@@ -165,6 +188,8 @@ var Demo = function() {
 
 };
 
+
+
 var canvas = Demo.prototype.canvas = document.getElementsByTagName('canvas')[0];
 
 var ctx = Demo.prototype.ctx = canvas.getContext('2d');
@@ -199,6 +224,63 @@ var raf = window.requestAnimationFrame
 Demo.prototype.update = function(dt) {
 	this.space.step(dt);
 };
+
+Demo.prototype.beginTransition = function(){
+    console.log(this);
+
+    var self = this;
+    var targetShapes = [];
+    this.space.eachShape(function(shape){
+        targetShapes.push(shape);
+    });
+
+    //turn off collisions by placing each body on the 0 collision layer
+    for (var i = 0; i < targetShapes.length; i++) {
+        targetShapes[i].setLayers(0);
+    }
+
+    var fn = function(){
+        self.endTransitionOnRest();
+    };
+    setTimeout(fn, 1000);
+};
+
+Demo.prototype.endTransitionOnRest = function(){
+
+    var self = this;
+    var velocityThresh = 5;
+    var lowVec = v(10000,10000); //hack to start the iterator off right
+
+    var targetShapes = [];
+    this.space.eachShape(function(shape){
+        targetShapes.push(shape);
+    });
+
+    var fn = function(){
+        self.endTransitionOnRest();
+    };
+
+    //check the speed of the bodies in question, store the fastest one.
+    for (var i = 0; i < targetShapes.length; i++) {
+        var tempVec = v(targetShapes[i].body.vx, targetShapes[i].body.vy);
+        if (v.lengthsq(tempVec) < v.lengthsq(lowVec)){
+            lowVec = tempVec;
+        }
+    }
+
+    if(v.lengthsq(lowVec) < velocityThresh){
+        for (var i = 0; i < targetShapes.length; i++) {
+            targetShapes[i].setLayers(GRABABLE_MASK_BIT);
+        }
+        console.log("transition complete");
+    }else{
+        setTimeout(fn, 1000);
+        console.log("transition continuing");
+    }
+
+
+};
+
 
 Demo.prototype.drawInfo = function() {
 	var space = this.space;
@@ -560,4 +642,5 @@ var demos = [];
 var addDemo = function(name, demo) {
 	demos.push({name:name, demo:demo});
 };
+
 

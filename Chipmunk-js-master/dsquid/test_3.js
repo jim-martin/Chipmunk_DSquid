@@ -515,3 +515,6 @@ var Balls = function() {
 };
 
 Balls.prototype = Object.create(Test.prototype);
+
+balls = new Balls();
+balls.run();

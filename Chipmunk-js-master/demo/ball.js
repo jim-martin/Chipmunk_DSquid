@@ -19,6 +19,7 @@ var xDim;
 var yDim;
 
 var picker = $("#picker");
+var filters = $("#filters");
 
 function init_graph() {
     //draw two selectors for axes
@@ -32,7 +33,7 @@ function init_graph() {
     position_points();
 }
 
-function populate_picker(){
+function populate_picker() {
     //create table
     //field
 
@@ -41,39 +42,39 @@ function populate_picker(){
     var picker_body = $("#picker_body");
 
     //add a row to picker for each header field
-    for(var i = 1; i < headers.length; i++){
-        picker_body.append("<tr><td>"+headers[i]+"</td><td class='column1'></td><td class='column2'></td><td class='column3'></td><td class='column4'></td></tr>")
+    for (var i = 1; i < headers.length; i++) {
+        picker_body.append("<tr><td>" + headers[i] + "</td><td class='column1'></td><td class='column2'></td><td class='column3'></td><td class='column4'></td></tr>")
     }
 
-    $("td").on("click", function(){
+    $("td").on("click", function () {
         //get class
         //set all of that class to background clear
-        if($(this).hasClass("column1")){
-            $(".column1").css({"background":"none"});
+        if ($(this).hasClass("column1")) {
+            $(".column1").css({"background": "none"});
         }
-        if($(this).hasClass("column2")){
-            $(".column2").css({"background":"none"});
+        if ($(this).hasClass("column2")) {
+            $(".column2").css({"background": "none"});
         }
-        if($(this).hasClass("column3")){
-            $(".column3").css({"background":"none"});
+        if ($(this).hasClass("column3")) {
+            $(".column3").css({"background": "none"});
         }
-        if($(this).hasClass("column4")){
-            $(".column4").css({"background":"none"});
+        if ($(this).hasClass("column4")) {
+            $(".column4").css({"background": "none"});
         }
 
         //set the clicked cell to have a background
-        $(this).css({"background":"rgba(82, 203, 239, 0.8)"});
+        $(this).css({"background": "rgba(82, 203, 239, 0.8)"});
 
-        if($(this).hasClass("column1")){
+        if ($(this).hasClass("column1")) {
             xDim = $(this).siblings()[0].innerHTML;
         }
-        if($(this).hasClass("column2")){
+        if ($(this).hasClass("column2")) {
             yDim = $(this).siblings()[0].innerHTML;
         }
-        if($(this).hasClass("column3")){
+        if ($(this).hasClass("column3")) {
             sizeDim = $(this).siblings()[0].innerHTML;
         }
-        if($(this).hasClass("column4")){
+        if ($(this).hasClass("column4")) {
             colorDim = $(this).siblings()[0].innerHTML;
         }
 
@@ -81,7 +82,7 @@ function populate_picker(){
     })
 }
 
-function clean_datapoint(a){
+function clean_datapoint(a) {
     a = a.split(" ").join("");
     a = a.split("$").join("");
     a = a.split("\"").join("");
@@ -95,13 +96,13 @@ function clean_datapoint(a){
     return a;
 }
 
-function get_shape_info(index){
+function get_shape_info(index) {
     dataKeys = Object.keys(pointsData);
     console.log(pointsData[dataKeys[index]]);
 }
 
 //rescale
-function set_scale(){
+function set_scale() {
     var x_var = xDim;
     var y_var = yDim;
     var color_var = colorDim;
@@ -119,21 +120,48 @@ function set_scale(){
         var sizePos = datapoints[i].fields[size_var];
 
 
-        if(xPos > xScale){
+        if (xPos > xScale) {
             xScale = xPos;
         }
-        if(yPos > yScale){
+        if (yPos > yScale) {
             yScale = yPos;
         }
-        if(colorPos > colorScale){
+        if (colorPos > colorScale) {
             colorScale = colorPos;
         }
-        if(sizePos > sizeScale){
+        if (sizePos > sizeScale) {
             sizeScale = sizePos;
         }
     }
     //console.log("xScale: "+xScale);
     //console.log("yScale: "+yScale);
+}
+
+//get scale for a single axis
+function get_scale(axis){
+    var scale = {};
+    scale.minScale;
+    scale.maxScale;
+    for(var i = 0; i < datapoints.length; i++){
+        var curPoint = datapoints[i];
+
+        if(typeof(scale.minScale) == "undefined"){
+            scale.minScale = datapoints[i].fields[axis];
+        }
+        if(typeof(scale.maxScale) == "undefined"){
+            scale.maxScale = datapoints[i].fields[axis];
+        }
+
+        if(datapoints[i].fields[axis] < scale.minScale){
+            scale.minScale = datapoints[i].fields[axis];
+        }
+
+        if(datapoints[i].fields[axis] > scale.maxScale){
+            scale.maxScale = datapoints[i].fields[axis];
+        }
+    }
+
+    return scale;
 }
 
 function position_points() {
@@ -144,48 +172,48 @@ function position_points() {
     var size_var = sizeDim;
 
 
-
-
     set_scale();
 
     for (var i = 0; i < datapoints.length; i++) {
         var xPos = datapoints[i].fields[x_var];
         var yPos = datapoints[i].fields[y_var];
-        datapoints[i].moveTarget(xPos * 580/xScale + 20, yPos * 380/ yScale + 20);
+        datapoints[i].moveTarget(xPos * 580 / xScale + 20, yPos * 380 / yScale + 20);
 
         //set color
-        if(typeof(color_var) != "undefined"){
+        if (typeof(color_var) != "undefined") {
             //point.body.style()
             var colorPos = datapoints[i].fields[color_var];
-            var colorString = "rgb("+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+")";
             //console.log(colorString);
 
 
-            datapoints[i].shape.colorstring = colorString;
-
-            newstyle = function(){
-                return this.colorstring;
-            }
-            datapoints[i].redraw(newstyle);
+            //datapoints[i].shape.colorstring = colorString;
+            datapoints[i].red = Math.round(colorPos / colorScale * 255);
+            datapoints[i].green = Math.round(colorPos / colorScale * 255);
+            datapoints[i].blue = Math.round(colorPos / colorScale * 255);
+            datapoints[i].alpha = 1;
         }
 
         //set size
-        if(typeof(size_var) != "undefined"){
+        if (typeof(size_var) != "undefined") {
             var max_radius = 10;
             var min_radius = 3;
 
 
             var sizePos = datapoints[i].fields[size_var];
             datapoints[i].radius = Math.round(sizePos / sizeScale * 7) + 3;
-
         }
 
+        if (datapoints[i].fields["1999 Median Income ('11 Dollars)"] < 30000) {
+            datapoints[i].alpha = .3;
+            datapoints[i].red = 255;
+        }
 
+        datapoints[i].redraw();
     }
     console.log(datapoints);
 }
 
-function push_view(){
+function push_view() {
     //push new ViewCommand with
     //new axes
     //old axes
@@ -203,7 +231,7 @@ function push_view(){
     undo_stack.push(new_view_command);
 }
 
-var ViewCommand = function(new_view, old_view){
+var ViewCommand = function (new_view, old_view) {
     this.new_view = new_view;
     this.old_view = old_view;
 
@@ -213,22 +241,71 @@ var ViewCommand = function(new_view, old_view){
 
 
 var temp_view = [];
-function open_picker(){
+function open_picker() {
     console.log("open picker");
-    if(picker.css("display") == "block"){
-        picker.css({"display":"none"});
+    if (picker.css("display") == "block") {
+        picker.css({"display": "none"});
 
         //if temp != current axes
         //push command object
 
     }
-    else{
-        picker.css({"display":"block"});
+    else {
+        picker.css({"display": "block"});
 
         //push current axes to temp variables
     }
+}
 
+function open_filters() {
+    console.log("open filters");
+    if (filters.css("display") == "block") {
+        filters.css({"display": "none"});
 
+        //if temp != current axes
+        //push command object
+
+    }
+    else {
+        filters.css({"display": "block"});
+
+        //push current axes to temp variables
+    }
+}
+
+function add_filter() {
+    //create new select
+
+    var newFilter = $('<div><select onchange="filter_update_axes(this)">Axes</select> Min: <input type="number"  onchange="filter_update_numbers(this)"> Max: <input type="number" onchange="filter_update_numbers(this)"><span onclick="remove_filter(this)"> Remove</span></div>')
+    $("#filters").append(newFilter);
+
+    newSelect = newFilter.children("select")[0];
+
+    //populate select
+    for (var i = 1; i < headers.length; i++) {
+        newSelect.options[i - 1] = new Option(headers[i], headers[i]);
+        //ySelect.options[i - 1] = new Option(headers[i], headers[i]);
+    }
+
+    //populate values in min / max
+
+    //onchange -> redraw
+
+    //<select id="xAxis" onchange="position_points();"></select>
+}
+function remove_filter(a){
+    console.log("remove filter");
+    $(a).parent().remove();
+}
+
+function filter_update_axes(a){
+    //update the min / max values
+    
+}
+function filter_update_numbers(a){
+    //
+
+    //redraw
 }
 
 var Balls = function () {
@@ -293,20 +370,20 @@ var Balls = function () {
 
             headers = csv_array[0];
 
-            for(var i = 1; i < csv_array.length; i++){
+            for (var i = 1; i < csv_array.length; i++) {
                 curLine = csv_array[i];
                 pointsData[curLine[0]] = {};
-                if(curLine[0] == "Shadyside"){
+                if (curLine[0] == "Shadyside") {
                     target_index = i;
                     console.log(target_index);
                 }
-                for(var j = 0; j < curLine.length; j++){
+                for (var j = 0; j < curLine.length; j++) {
                     //console.log(curLine[j]);
                     //console.log(clean_datapoint(curLine[j]));
-                    if(j > 0){
+                    if (j > 0) {
                         pointsData[curLine[0]][headers[j]] = clean_datapoint(curLine[j]);
                     }
-                    else{
+                    else {
                         pointsData[curLine[0]][headers[j]] = curLine[j];
                     }
                 }
@@ -331,7 +408,7 @@ var Balls = function () {
     // This will parse a delimited string into an array of
     // arrays. The default delimiter is the comma, but this
     // can be overriden in the second argument.
-    function CSVToArray( strData, strDelimiter ){
+    function CSVToArray(strData, strDelimiter) {
         // Check to see if the delimiter is defined. If not,
         // then default to comma.
         strDelimiter = (strDelimiter || ",");
@@ -363,10 +440,10 @@ var Balls = function () {
 
         // Keep looping over the regular expression matches
         // until we can no longer find a match.
-        while (arrMatches = objPattern.exec( strData )){
+        while (arrMatches = objPattern.exec(strData)) {
 
             // Get the delimiter that was found.
-            var strMatchedDelimiter = arrMatches[ 1 ];
+            var strMatchedDelimiter = arrMatches[1];
 
             // Check to see if the given delimiter has a length
             // (is not the start of string) and if it matches
@@ -375,11 +452,11 @@ var Balls = function () {
             if (
                 strMatchedDelimiter.length &&
                 (strMatchedDelimiter != strDelimiter)
-            ){
+            ) {
 
                 // Since we have reached a new row of data,
                 // add an empty row to our data array.
-                arrData.push( [] );
+                arrData.push([]);
 
             }
 
@@ -387,30 +464,30 @@ var Balls = function () {
             // Now that we have our delimiter out of the way,
             // let's check to see which kind of value we
             // captured (quoted or unquoted).
-            if (arrMatches[ 2 ]){
+            if (arrMatches[2]) {
 
                 // We found a quoted value. When we capture
                 // this value, unescape any double quotes.
-                var strMatchedValue = arrMatches[ 2 ].replace(
-                    new RegExp( "\"\"", "g" ),
+                var strMatchedValue = arrMatches[2].replace(
+                    new RegExp("\"\"", "g"),
                     "\""
                 );
 
             } else {
 
                 // We found a non-quoted value.
-                var strMatchedValue = arrMatches[ 3 ];
+                var strMatchedValue = arrMatches[3];
 
             }
 
 
             // Now that we have our value string, let's add
             // it to the data array.
-            arrData[ arrData.length - 1 ].push( strMatchedValue );
+            arrData[arrData.length - 1].push(strMatchedValue);
         }
 
         // Return the parsed data.
-        return( arrData );
+        return ( arrData );
     }
 
 

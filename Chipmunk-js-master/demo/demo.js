@@ -74,7 +74,7 @@ Datapoint.prototype.redraw = function(style){
     var space = this.space;
     var shape = this.shape;
 
-    var colorstring = shape.colorstring;
+    //var colorstring = shape.colorstring;
 
     //console.log(space);
     space.removeShape(this.shape);
@@ -82,10 +82,10 @@ Datapoint.prototype.redraw = function(style){
     var redrawing_shape = new cp.CircleShape(this.body, this.radius, v(0,0));
     //redrawing_shape.style = style;
     //console.log(redrawing_shape.style());
-    redrawing_shape.colorstring = colorstring;
+    redrawing_shape.datapoint = this;
 
     redrawing_shape.style = function(){
-        return this.colorstring;
+        return "rgba("+this.datapoint.red+","+this.datapoint.green+","+this.datapoint.blue+","+this.datapoint.alpha+")";
     }
 
     this.shape = space.addShape(redrawing_shape);

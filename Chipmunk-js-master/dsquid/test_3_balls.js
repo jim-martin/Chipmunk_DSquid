@@ -21,6 +21,7 @@ var xDim;
 var yDim;
 
 var picker = $("#picker");
+var filters = $("#filters");
 
 var balls;
 
@@ -233,6 +234,57 @@ function open_picker(){
     }
 
 
+}
+
+function open_filters() {
+    console.log("open filters");
+    if (filters.css("display") == "block") {
+        filters.css({"display": "none"});
+
+        //if temp != current axes
+        //push command object
+
+    }
+    else {
+        filters.css({"display": "block"});
+
+        //push current axes to temp variables
+    }
+}
+
+function add_filter() {
+    //create new select
+
+    var newFilter = $('<div><select onchange="filter_update_axes(this)">Axes</select> Min: <input type="number"  onchange="filter_update_numbers(this)"> Max: <input type="number" onchange="filter_update_numbers(this)"><span onclick="remove_filter(this)"> Remove</span></div>')
+    $("#filters").append(newFilter);
+
+    newSelect = newFilter.children("select")[0];
+
+    //populate select
+    for (var i = 1; i < headers.length; i++) {
+        newSelect.options[i - 1] = new Option(headers[i], headers[i]);
+        //ySelect.options[i - 1] = new Option(headers[i], headers[i]);
+    }
+
+    //populate values in min / max
+
+    //onchange -> redraw
+
+    //<select id="xAxis" onchange="position_points();"></select>
+}
+function remove_filter(a){
+    console.log("remove filter");
+    $(a).parent().remove();
+}
+
+function filter_update_axes(a){
+    //update the min / max values
+
+}
+function filter_update_numbers(a){
+    //
+
+    //redraw
 }
 
 var Balls = function () {

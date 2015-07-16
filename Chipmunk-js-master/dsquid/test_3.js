@@ -5,6 +5,9 @@ var ctx;
 var GRABABLE_MASK_BIT = 1<<31;
 var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
 
+var datapoints = [];
+var lenses = [];
+
 
 //utility function to call 'fn' with a delay (prolly shouldn't be global...)
 var soon = function(fn) { setTimeout(fn, 1); };
@@ -92,6 +95,43 @@ Datapoint.prototype.redraw = function(style){
     shape.setFriction(1);
 };
 
+
+
+
+/*
+Lense object
+ */
+var Lense = function(s, centerX, centerY, rad){
+
+	var space = this.space = s;
+	var center = this.center = v(centerX, centerY);
+	var radius = this.radius = rad;
+
+	lenses.push(this);
+}
+
+Lense.prototype.getPoints = function() {
+	//look through all datapoints 
+	
+
+	//return the points inside bounds
+	
+};
+
+Lense.prototype.draw = function(ctx, scale, point2canvas) {
+
+	//draw shape based on lense style? nahh, hard code dat shit
+	var c = point2canvas(this.center);
+	ctx.beginPath();
+	ctx.arc(c.x, c.y, scale * this.radius, 0, 2*Math.PI, false);
+	ctx.stroke();
+
+};
+
+Lense.prototype.addFilter = function() {
+	//add a filter here
+};
+
 var Test = function() {
 	var space = this.space = new cp.Space();
 	this.remainder = 0;
@@ -100,6 +140,7 @@ var Test = function() {
 	this.simulationTime = 0;
 	this.drawTime = 0;
 
+	console.log(this);
  	var self = this;
 	var canvas2point = this.canvas2point = function(x, y) {
 		return v(x / self.scale, 480 - y / self.scale);
@@ -109,10 +150,15 @@ var Test = function() {
 			return v(point.x * self.scale, (480 - point.y) * self.scale);
 	};
 
+
 	// HACK HACK HACK - its awful having this here, and its going to break when we
 	// have multiple tests open at the same time.
 	this.canvas.onmousemove = function(e) {
 		self.mouse = canvas2point(e.clientX, e.clientY);
+
+		if(self.tempSelection != null){
+			self.tempSelection.radius = v.dist(self.tempSelection.center, self.mouse);
+		}
 	};
 
 	var mouseBody = this.mouseBody = new cp.Body(Infinity, Infinity);
@@ -138,7 +184,8 @@ var Test = function() {
 			}else{
 
 				//log start point of selection (also servers as bool for draw call)
-				self.selecitonStart = self.mouse;
+				self.tempSelection = new Lense(self.space, self.mouse.x, self.mouse.y, 0);
+				console.log("selectionStart");
 
 				//start tracking selection area
 
@@ -160,8 +207,14 @@ var Test = function() {
 				self.mouseJoint = null;
 			}
 
-			if(self.selecitonStart){
+			if(self.tempSelection){
 				//commit selection area 
+				
+				//stop tracking selection
+				self.tempSelection = null;
+				console.log("selectionEnd");
+				console.log(lenses);
+
 			}
 		}
 
@@ -235,6 +288,7 @@ Test.prototype.drawInfo = function() {
 	}
 };
 
+
 Test.prototype.draw = function() {
 	var ctx = this.ctx;
 
@@ -298,6 +352,10 @@ Test.prototype.draw = function() {
 	});
 
 	this.drawInfo();
+
+	for (var i = 0; i < lenses.length; i++) {
+		lenses[i].draw(ctx, self.scale, self.point2canvas);
+	};
 };
 
 Test.prototype.run = function() {
@@ -366,8 +424,6 @@ Test.prototype.step = function(dt) {
 };
 
 Test.prototype.beginTransition = function(){
-	console.log(this);
-
 	var self = this;
 	var targetShapes = [];
 	this.space.eachShape(function(shape){
@@ -407,67 +463,14 @@ Test.prototype.endTransitionOnRest = function( targetShapes ){
 		for (var i = 0; i < targetShapes.length; i++) {
 			targetShapes[i].setLayers(GRABABLE_MASK_BIT);
 		}
-		console.log("transition complete");
+		// console.log("transition complete");
 	}else{
 		setTimeout(fn, 1000);
-		console.log("transition continuing");
+		// console.log("transition continuing");
 	}
 
 
 };
-
-
-Test.prototype.beginTransition = function(){
-	console.log(this);
-
-	var self = this;
-	var targetShapes = [];
-	this.space.eachShape(function(shape){
-		targetShapes.push(shape);
-	});
-
-	//turn off collisions by placing each body on the 0 collision layer
-	for (var i = 0; i < targetShapes.length; i++) {
-		targetShapes[i].setLayers(0);
-	}
-
-	var fn = function(){
-		self.endTransitionOnRest( targetShapes );
-	};
-	setTimeout(fn, 1000);
-};
-
-Test.prototype.endTransitionOnRest = function( targetShapes ){
-	
-	var self = this;
-	var velocityThresh = 0.5;
-	var lowVec = v(10000,10000); //hack to start the iterator off right
-
-	var fn = function(){
-		self.endTransitionOnRest( targetShapes );
-	};
-
-	//check the speed of the bodies in question, store the fastest one.
-	for (var i = 0; i < targetShapes.length; i++) {
-		var tempVec = v(targetShapes[i].body.vx, targetShapes[i].body.vy);
-		if (v.lengthsq(tempVec) < v.lengthsq(lowVec)){
-			lowVec = tempVec;
-		}
-	}
-
-	if(v.lengthsq(lowVec) < velocityThresh){
-		for (var i = 0; i < targetShapes.length; i++) {
-			targetShapes[i].setLayers(GRABABLE_MASK_BIT);
-		}
-		console.log("transition complete");
-	}else{
-		setTimeout(fn, 1000);
-		console.log("transition continuing");
-	}
-
-
-};
-
 
 
 

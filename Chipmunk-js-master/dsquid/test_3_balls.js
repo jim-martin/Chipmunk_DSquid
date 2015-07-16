@@ -193,12 +193,14 @@ function position_points() {
             //point.body.style()
             var colorPos = datapoints[i].fields[color_var];
             if(datapoints[i].enabled == true && filter_list.length > 0){
-            var colorString = "rgb("+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+")";
                 var colorString = "rgb(255,0,0)";
             }
+            else if(datapoints[i].enabled == true && filter_list.length == 0){
+                var colorString = "rgb("+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+")";
+            }
             else{
-                var colorString = "rgba("+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+","+.2+")";
-                //var colorString = "rgb(255,0,0)";
+                //var colorString = "rgba("+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+","+.2+")";
+                var colorString = "rgb("+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+","+Math.round(colorPos/colorScale * 255)+")";
             }
             //console.log(colorString);
 

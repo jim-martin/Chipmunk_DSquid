@@ -50,21 +50,16 @@ var Filter = function(){
     return newFilter;
 }
 
+var filters_open = false;
 function open_filters() {
     console.log("open filters");
-    if (filters.css("display") == "block") {
-        filters.css({"display": "none"});
-
-        //if temp != current axes
-        //push command object
-
-        //populate the filter list from filters[]
-
+    if(!filters_open){
+        filters.css({"right": "0"});
+        filters_open = true;
     }
-    else {
-        filters.css({"display": "block"});
-
-        //push current axes to temp variables
+    else{
+        filters.css({"right":"-60%"})
+        filters_open = false;
     }
 }
 

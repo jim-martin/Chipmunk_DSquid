@@ -4,6 +4,52 @@
 var filter_list = [];
 var filters = $("#filters");
 
+var Filter = function(){
+    newFilter = {};
+
+    var scale = get_scale(headers[1]);
+
+    newFilter.min = scale.min;
+    newFilter.max = scale.max;
+    newFilter.header = "Sector #";
+
+    newFilter.filter_point = function(datapoint){
+        //console.log(datapoint.fields[this.header]);
+        if(datapoint.fields[this.header] <= this.max && datapoint.fields[this.header] >= this.min){
+            return true;
+        }
+        else{
+            return false;
+        }
+    }
+
+    //return object with array of enabled and array of disabled
+    newFilter.filter_points = function(datapoints){
+        var points = {};
+        points.enabled = [];
+        points.disabled = [];
+        for(var i = 0; i < datapoints.length; i++){
+            var filtered = this.filter_point(datapoints[i]);
+            if(filtered){
+                points.enabled.push(datapoints[i]);
+            }
+            else{
+                points.disabled.push(datapoints[i]);
+            }
+        }
+        return points;
+    }
+
+    newFilter.changeHeader = function(newHeader){
+        this.header = newHeader;
+        var scale = get_scale(newHeader);
+        this.max = scale.max;
+        this.min = scale.min;
+    }
+
+    return newFilter;
+}
+
 function open_filters() {
     console.log("open filters");
     if (filters.css("display") == "block") {
@@ -34,8 +80,6 @@ function add_filter() {
     for (var i = 1; i < headers.length; i++) {
         newSelect.options[i - 1] = new Option(headers[i], headers[i]);
         //ySelect.options[i - 1] = new Option(headers[i], headers[i]);
-
-
 
         //onchange -> redraw
 

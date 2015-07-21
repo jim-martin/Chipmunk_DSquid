@@ -188,6 +188,18 @@ function position_points() {
             }
         }
 
+        //notes on color from Jeff
+        //color themes
+        //colorscheme object
+            //nomitave
+            //points (0,.5,1)
+        //colorforvalue function (0-1)
+        //nomitave schemes (blocky)
+        //converts luva color space
+        //linear interpolation
+        //converts it back to RGB
+
+
         //set color
         if(typeof(color_var) != "undefined"){
             //point.body.style()

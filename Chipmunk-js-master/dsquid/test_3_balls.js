@@ -13,8 +13,6 @@ var view_sequence = [];
 
 var undo_stack = [];
 
-var datapoints = [];
-
 var colorDim;
 var sizeDim;
 var xDim;

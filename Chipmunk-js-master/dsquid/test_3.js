@@ -95,43 +95,6 @@ Datapoint.prototype.redraw = function(style){
     shape.setFriction(1);
 };
 
-
-
-
-/*
-Lense object
- */
-var Lense = function(s, centerX, centerY, rad){
-
-	var space = this.space = s;
-	var center = this.center = v(centerX, centerY);
-	var radius = this.radius = rad;
-
-	lenses.push(this);
-}
-
-Lense.prototype.getPoints = function() {
-	//look through all datapoints 
-	
-
-	//return the points inside bounds
-	
-};
-
-Lense.prototype.draw = function(ctx, scale, point2canvas) {
-
-	//draw shape based on lense style? nahh, hard code dat shit
-	var c = point2canvas(this.center);
-	ctx.beginPath();
-	ctx.arc(c.x, c.y, scale * this.radius, 0, 2*Math.PI, false);
-	ctx.stroke();
-
-};
-
-Lense.prototype.addFilter = function() {
-	//add a filter here
-};
-
 var Test = function() {
 	var space = this.space = new cp.Space();
 	this.remainder = 0;
@@ -157,7 +120,7 @@ var Test = function() {
 		self.mouse = canvas2point(e.clientX, e.clientY);
 
 		if(self.tempSelection != null){
-			self.tempSelection.radius = v.dist(self.tempSelection.center, self.mouse);
+			self.tempSelection.updateSize(v.dist(self.tempSelection.center, self.mouse));
 		}
 	};
 
@@ -301,10 +264,17 @@ Test.prototype.draw = function() {
 	this.ctx.font = "16px sans-serif";
 	this.ctx.lineCap = 'round';
 
-	this.space.eachShape(function(shape) {
-		ctx.fillStyle = shape.style();
-		shape.draw(ctx, self.scale, self.point2canvas);
-	});
+	// this.space.eachShape(function(shape) {
+	// 	ctx.fillStyle = shape.style();
+	// 	shape.draw(ctx, self.scale, self.point2canvas);
+	// });
+	// 
+	
+	for (var i = 0; i < datapoints.length; i++) {
+		ctx.fillStyle = datapoints[i].shape.style();
+		datapoints[i].shape.draw(ctx, self.scale, self.point2canvas);
+	}
+
 
 	// Draw collisions
 /*  
@@ -522,7 +492,7 @@ cp.CircleShape.prototype.draw = function(ctx, scale, point2canvas) {
 	drawCircle(ctx, scale, point2canvas, this.tc, this.r);
 
 	// And draw a little radian so you can see the circle roll.
-	drawLine(ctx, point2canvas, this.tc, cp.v.mult(this.body.rot, this.r).add(this.tc));
+	//drawLine(ctx, point2canvas, this.tc, cp.v.mult(this.body.rot, this.r).add(this.tc));
 };
 
 var randColor = function() {

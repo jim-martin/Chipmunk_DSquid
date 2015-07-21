@@ -872,6 +872,13 @@ var Shape = cp.Shape = function(body) {
 	
 	this.space = null;
 
+	var style = this.style;
+	style.r = 255;
+	style.g = 255;
+	style.b = 255;
+	style.a = 255;
+
+
 	// Copy the collision code from the prototype into the actual object. This makes collision
 	// function lookups slightly faster.
 	this.collisionCode = this.collisionCode;
@@ -4412,7 +4419,8 @@ Space.prototype.pointQueryFirst = function(point, layers, group)
 {
 	var outShape = null;
 	this.pointQuery(point, layers, group, function(shape) {
-		if(!shape.sensor) outShape = shape;
+		//if(!shape.sensor) outShape = shape;
+		outShape = shape;
 	});
 	
 	return outShape;

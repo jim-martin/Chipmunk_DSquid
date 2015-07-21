@@ -141,13 +141,14 @@ var Test = function() {
 				var body = shape.body;
 				var mouseJoint = self.mouseJoint = new cp.PivotJoint(mouseBody, body, v(0,0), body.world2Local(point));
 
-				mouseJoint.maxForce = 5000;
+				mouseJoint.maxForce = 50000000;
 				mouseJoint.errorBias = Math.pow(1 - 0.15, 60);
 				space.addConstraint(mouseJoint);
 			}else{
 
 				//log start point of selection (also servers as bool for draw call)
 				self.tempSelection = new Lense(self.space, self.mouse.x, self.mouse.y, 0);
+				lenses.push(self.tempSelection);
 				console.log("selectionStart");
 
 				//start tracking selection area
@@ -174,6 +175,7 @@ var Test = function() {
 				//commit selection area 
 				
 				//stop tracking selection
+				self.tempSelection.getPoints();
 				self.tempSelection = null;
 				console.log("selectionEnd");
 				console.log(lenses);
@@ -271,7 +273,7 @@ Test.prototype.draw = function() {
 	// 
 	
 	for (var i = 0; i < datapoints.length; i++) {
-		ctx.fillStyle = datapoints[i].shape.style();
+		ctx.fillStyle = datapoints[i].shape.getStyle();
 		datapoints[i].shape.draw(ctx, self.scale, self.point2canvas);
 	}
 
@@ -453,6 +455,7 @@ var drawCircle = function(ctx, scale, point2canvas, c, radius) {
 	ctx.arc(c.x, c.y, scale * radius, 0, 2*Math.PI, false);
 	ctx.fill();
 	ctx.stroke();
+	ctx.closePath();
 };
 
 var drawLine = function(ctx, point2canvas, a, b) {
@@ -462,6 +465,7 @@ var drawLine = function(ctx, point2canvas, a, b) {
 	ctx.moveTo(a.x, a.y);
 	ctx.lineTo(b.x, b.y);
 	ctx.stroke();
+	ctx.closePath();
 };
 
 cp.PolyShape.prototype.draw = function(ctx, scale, point2canvas)
@@ -479,6 +483,7 @@ cp.PolyShape.prototype.draw = function(ctx, scale, point2canvas)
 	}
 	ctx.fill();
 	ctx.stroke();
+	ctx.closePath();
 };
 
 cp.SegmentShape.prototype.draw = function(ctx, scale, point2canvas) {
@@ -503,6 +508,26 @@ var styles = [];
 for (var i = 0; i < 100; i++) {
 	styles.push("rgb(" + randColor() + ", " + randColor() + ", " + randColor() + ")");
 }
+
+cp.Shape.prototype.initStyle = function() {
+	var style = this.style;
+	style.r = 255;
+	style.g = 255;
+	style.b = 255;
+	style.a = 255;
+	style.radius = this.radius;
+};
+
+cp.Shape.prototype.setStyle = function(r, g, b, a) {
+	this.style.r = r;
+	this.style.g = g;
+	this.style.b = b;
+	this.style.a = a;
+};
+
+cp.Shape.prototype.getStyle = function() {
+	return "rgba(" + this.style.r + "," + this.style.g + "," + this.style.b + "," + this.style.a + ")";
+};
 
 cp.Shape.prototype.style = function() {
   var body;

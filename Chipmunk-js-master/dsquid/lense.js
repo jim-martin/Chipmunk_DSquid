@@ -22,6 +22,8 @@ var Lense = function(s, centerX, centerY, rad){
 
 	//lenses.push(this);
 
+    fuiController.lensesList.push(this);
+
 };
 
 Lense.prototype.updateSize = function(rad) {

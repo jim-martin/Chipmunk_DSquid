@@ -20,6 +20,9 @@ var yDim;
 
 var picker = $("#picker");
 
+var fuiController;
+
+var lenses = [];
 
 var balls;
 
@@ -33,6 +36,12 @@ function init_graph() {
 
     //change one of them to not be sector #
     position_points();
+
+    fuiController = new filterUIController();
+
+        test_global_lense();
+
+
 }
 
 function populate_picker(){
@@ -498,3 +507,16 @@ Array.prototype.remove = function(from, to) {
     this.length = from < 0 ? this.length + from : from;
     return this.push.apply(this, rest);
 };
+
+var testGlobal;
+function test_global_lense(){
+    testGlobal = new Lense(balls.space, 0,0,0);
+    testGlobal.filterList[0].max = 3;
+    //testGlobal.draw();
+
+    fuiController.lensesList.push(testGlobal);
+
+    //set filter on lense
+    testGlobal.callFilters();
+
+}

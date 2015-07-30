@@ -81,7 +81,7 @@
 </style>
 <div>
     <span onclick="open_picker();">Change Axes</span>
-    <span onclick="open_filters();">Filters</span>
+    <span onclick="fuiController.open_filters();">Filters</span>
 </div>
 <div id="picker">
 </div>
@@ -89,9 +89,28 @@
     <!--<div>-->
     <!--<select>Axes</select><input type="number"><input type="number">Remove-->
     <!--</div>-->
-    <div onclick="add_filter()">
-        Add
+    <h3>Global Filters</h3>
+    <div id="globalList">
+
     </div>
+    <h3>Lenses</h3>
+    <div id="lenseList">
+
+    </div>
+    <h3>Walls</h3>
+    <div id="wallList">
+
+    </div>
+
+
+    <div id="loose_filters">
+        <h3>Loose Filters</h3>
+        <div onclick="add_filter()">
+            Add
+        </div>
+
+    </div>
+
     </div>
 <canvas></canvas>
 
@@ -99,6 +118,7 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
 <script src="../cp.js"></script>
 <script src="lense.js"></script>
+<script src="filterUIController.js"></script>
 <script src="test_3.js"></script>
 <script src="test_3_balls.js"></script>
 <script src="filters.js"></script>

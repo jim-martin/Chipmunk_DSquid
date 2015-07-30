@@ -321,7 +321,7 @@ Test.prototype.draw = function() {
 		}
 	});
 
-	this.drawInfo();
+	//this.drawInfo();
 
 	for (var i = 0; i < lenses.length; i++) {
 		lenses[i].draw(ctx, self.scale, self.point2canvas);

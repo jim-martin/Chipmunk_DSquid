@@ -15,42 +15,46 @@ var filterUIController = function(){
             filters.css({"right": "0"});
             filters_open = true;
 
-            //clear boxes
-            $("#globalList").html("");
-            $("#lenseList").html("");
-            $("#wallList").html("");
-
-            //repopulate
-            for(var k = 0; k < lensesList.length; k++) {
-                for (var p = 0; p < lensesList[k].filterList.length; p++) {
-                    var curFilter = lensesList[k].filterList[p];
-
-                    //curFilter.id is just incremented as filters are created
-                    var newFilter = $('<div filter_id="' + curFilter.id + '"><select onchange="fuiController.filter_update_axes(this, '+curFilter.id+')">Axes</select> Min: <input type="number"  onchange="fuiController.filter_update_numbers(this, '+curFilter.id+')"> Max: <input type="number" onchange="fuiController.filter_update_numbers(this, '+curFilter.id+')"><span onclick="fuiController.remove_filter(this, '+curFilter.id+')"> Remove</span></div>');
-                    $("#lenseList").append(newFilter);
-
-                    var newSelect = newFilter.children("select")[0];
-
-                    //populate select
-                    for (var i = 1; i < headers.length; i++) {
-                        newSelect.options[i - 1] = new Option(headers[i], headers[i]);
-                    }
-
-                    //set selected
-                    $(newSelect).val(curFilter.header);
-
-                    //populate values in min / max
-                    min_field = newFilter.children("[type='number']")[0];
-                    max_field = newFilter.children("[type='number']")[1];
-
-                    $(min_field).val(curFilter.min);
-                    $(max_field).val(curFilter.max);
-                }
-            }
+            repopulate_filter_panel();
         }
         else{
             filters.css({"right":"-60%"})
             filters_open = false;
+        }
+    }
+
+    var repopulate_filter_panel = function(){
+        //clear boxes
+        $("#globalList").html("");
+        $("#lenseList").html("");
+        $("#wallList").html("");
+
+        //repopulate
+        for(var k = 0; k < lensesList.length; k++) {
+            for (var p = 0; p < lensesList[k].filterList.length; p++) {
+                var curFilter = lensesList[k].filterList[p];
+
+                //curFilter.id is just incremented as filters are created
+                var newFilter = $('<div filter_id="' + curFilter.id + '"><select onchange="fuiController.filter_update_axes(this, '+curFilter.id+')">Axes</select> Min: <input type="number"  onchange="fuiController.filter_update_numbers(this, '+curFilter.id+')"> Max: <input type="number" onchange="fuiController.filter_update_numbers(this, '+curFilter.id+')"><span onclick="fuiController.remove_filter(this, '+curFilter.id+')"> Remove</span></div>');
+                $("#lenseList").append(newFilter);
+
+                var newSelect = newFilter.children("select")[0];
+
+                //populate select
+                for (var i = 1; i < headers.length; i++) {
+                    newSelect.options[i - 1] = new Option(headers[i], headers[i]);
+                }
+
+                //set selected
+                $(newSelect).val(curFilter.header);
+
+                //populate values in min / max
+                min_field = newFilter.children("[type='number']")[0];
+                max_field = newFilter.children("[type='number']")[1];
+
+                $(min_field).val(curFilter.min);
+                $(max_field).val(curFilter.max);
+            }
         }
     }
 
@@ -86,7 +90,7 @@ var filterUIController = function(){
         position_points();
     }
 
-    //not updated
+    //takes updates from numbers (DOM) for a single filter and updates it in the object
     var filter_update_numbers = this.filter_update_numbers = function(a, id){
         var filter_parent = $(a).parent();
         var filter_id = id;
@@ -104,7 +108,7 @@ var filterUIController = function(){
         position_points();
     }
 
-    //not updated
+    //removes filter from dom and object
     var remove_filter = this.remove_filter = function(a, id){
         console.log("remove filter");
         var filter_id = id;
@@ -140,6 +144,7 @@ var filterUIController = function(){
         //redraw
     }
 
+    //returns the filter with the corresponding id
     var select_filter = this.select_filter = function(id){
         var filter_id = id;
 
@@ -170,9 +175,6 @@ var filterUIController = function(){
         }
         return curFilter;
     }
-
-
-
 }
 
 

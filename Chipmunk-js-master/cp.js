@@ -4412,7 +4412,8 @@ Space.prototype.pointQueryFirst = function(point, layers, group)
 {
 	var outShape = null;
 	this.pointQuery(point, layers, group, function(shape) {
-		if(!shape.sensor) outShape = shape;
+		//if(!shape.sensor) outShape = shape;
+		outShape = shape;
 	});
 	
 	return outShape;

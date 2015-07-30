@@ -58,6 +58,7 @@ var Datapoint = function( s , targetx, targety ) {
 	var shape = this.shape = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
 		shape.setElasticity(0.8);
 		shape.setFriction(1);
+		shape.datapoint = this;
 
 	//define targetbody
 	var targetBody = this.targetBody = new cp.Body(Infinity, Infinity);
@@ -66,33 +67,34 @@ var Datapoint = function( s , targetx, targety ) {
 	// //add attractor
 	var attractor = this.attractor = new cp.AttractorJoint(targetBody, body);
 	space.addConstraint(attractor);
+
+	var style = this.style = "rgba(255,255,255,255)";
 };
 
 Datapoint.prototype.moveTarget = function( x, y ){
 	this.targetBody.setPos(v(x, y));
 };
 
-Datapoint.prototype.redraw = function(style){
-    var space = this.space;
-    var shape = this.shape;
+Datapoint.prototype.draw = function(ctx, scale, point2canvas) {
 
-    var colorstring = shape.colorstring;
+	//ensure collision radius is correct
+	this.shape.r = this.radius;
+	this.body.r = this.radius;
 
-    //console.log(space);
-    space.removeShape(this.shape);
+	//draw the shape with the correct style
+	var c = point2canvas(this.shape.tc);	
+	ctx.beginPath();
+		ctx.strokeStyle="rgba(0,0,0,255)";
+		ctx.fillStyle = this.style;
 
-    var redrawing_shape = new cp.CircleShape(this.body, this.radius, v(0,0));
-    //redrawing_shape.style = style;
-    //console.log(redrawing_shape.style());
-    redrawing_shape.colorstring = colorstring;
+		ctx.arc(c.x, c.y, scale * this.radius, 0, 2*Math.PI, false);
+		ctx.fill();
+		ctx.stroke();
+	ctx.closePath();
+};
 
-    redrawing_shape.style = function(){
-        return this.colorstring;
-    }
-
-    this.shape = space.addShape(redrawing_shape);
-    shape.setElasticity(0.8);
-    shape.setFriction(1);
+cp.Shape.prototype.pairDataPoint = function(d) {
+	this.dataPoint = d;
 };
 
 var Test = function() {
@@ -103,7 +105,6 @@ var Test = function() {
 	this.simulationTime = 0;
 	this.drawTime = 0;
 
-	console.log(this);
  	var self = this;
 	var canvas2point = this.canvas2point = function(x, y) {
 		return v(x / self.scale, 480 - y / self.scale);
@@ -141,13 +142,16 @@ var Test = function() {
 				var body = shape.body;
 				var mouseJoint = self.mouseJoint = new cp.PivotJoint(mouseBody, body, v(0,0), body.world2Local(point));
 
-				mouseJoint.maxForce = 5000;
+				mouseJoint.maxForce = 50000000;
 				mouseJoint.errorBias = Math.pow(1 - 0.15, 60);
 				space.addConstraint(mouseJoint);
+
+				console.log(shape.datapoint);
 			}else{
 
 				//log start point of selection (also servers as bool for draw call)
 				self.tempSelection = new Lense(self.space, self.mouse.x, self.mouse.y, 0);
+				lenses.push(self.tempSelection);
 				console.log("selectionStart");
 
 				//start tracking selection area
@@ -174,9 +178,9 @@ var Test = function() {
 				//commit selection area 
 				
 				//stop tracking selection
+				self.tempSelection.getPoints();
 				self.tempSelection = null;
 				console.log("selectionEnd");
-				console.log(lenses);
 
 			}
 		}
@@ -268,11 +272,12 @@ Test.prototype.draw = function() {
 	// 	ctx.fillStyle = shape.style();
 	// 	shape.draw(ctx, self.scale, self.point2canvas);
 	// });
-	// 
+	
 	
 	for (var i = 0; i < datapoints.length; i++) {
-		ctx.fillStyle = datapoints[i].shape.style();
-		datapoints[i].shape.draw(ctx, self.scale, self.point2canvas);
+		//ctx.save();
+			datapoints[i].draw(ctx, self.scale, self.point2canvas);
+		//ctx.restore();
 	}
 
 
@@ -453,6 +458,7 @@ var drawCircle = function(ctx, scale, point2canvas, c, radius) {
 	ctx.arc(c.x, c.y, scale * radius, 0, 2*Math.PI, false);
 	ctx.fill();
 	ctx.stroke();
+	ctx.closePath();
 };
 
 var drawLine = function(ctx, point2canvas, a, b) {
@@ -462,6 +468,7 @@ var drawLine = function(ctx, point2canvas, a, b) {
 	ctx.moveTo(a.x, a.y);
 	ctx.lineTo(b.x, b.y);
 	ctx.stroke();
+	ctx.closePath();
 };
 
 cp.PolyShape.prototype.draw = function(ctx, scale, point2canvas)
@@ -479,6 +486,7 @@ cp.PolyShape.prototype.draw = function(ctx, scale, point2canvas)
 	}
 	ctx.fill();
 	ctx.stroke();
+	ctx.closePath();
 };
 
 cp.SegmentShape.prototype.draw = function(ctx, scale, point2canvas) {
@@ -495,28 +503,4 @@ cp.CircleShape.prototype.draw = function(ctx, scale, point2canvas) {
 	//drawLine(ctx, point2canvas, this.tc, cp.v.mult(this.body.rot, this.r).add(this.tc));
 };
 
-var randColor = function() {
-  return Math.floor(Math.random() * 256);
-};
-
-var styles = [];
-for (var i = 0; i < 100; i++) {
-	styles.push("rgb(" + randColor() + ", " + randColor() + ", " + randColor() + ")");
-}
-
-cp.Shape.prototype.style = function() {
-  var body;
-  if (this.sensor) {
-    return "rgba(255,255,255,0)";
-  } else {
-    body = this.body;
-    if (body.isSleeping()) {
-      return "rgb(50,50,50)";
-    } else if (body.nodeIdleTime > this.space.sleepTimeThreshold) {
-      return "rgb(170,170,170)";
-    } else {
-      return styles[this.hashid % styles.length];
-    }
-  }
-};
 

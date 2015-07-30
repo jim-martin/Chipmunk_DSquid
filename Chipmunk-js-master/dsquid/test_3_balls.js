@@ -109,7 +109,7 @@ function clean_datapoint(a){
 
 function get_shape_info(index){
     dataKeys = Object.keys(pointsData);
-    console.log(pointsData[dataKeys[index]]);
+    // console.log(pointsData[dataKeys[index]]);
 }
 
 //rescale
@@ -222,12 +222,12 @@ function position_points() {
             //console.log(colorString);
 
 
-            datapoints[i].shape.colorstring = colorString;
+            datapoints[i].style = colorString;
 
             newstyle = function(){
                 return this.colorstring;
             }
-            datapoints[i].redraw(newstyle);
+            //datapoints[i].redraw(newstyle);
         }
 
         //set size
@@ -335,14 +335,14 @@ var Balls = function () {
         url: "../demo/data/pghsnap_education.csv",
         dataType: "text",
         success: function (result) {
-            console.log(result);
+            //console.log(result);
             //parse first line to define fields of object
             //var lines = result.split('\n');
             //console.log(lines[0]);
             //headers = lines[0].split(',');
 
             csv_array = CSVToArray(result);
-            console.log(csv_array);
+            //console.log(csv_array);
 
             //rest of rows parse into pointsData object
             //for (var i = 1; i < lines.length; i++) {
@@ -361,7 +361,7 @@ var Balls = function () {
                 pointsData[curLine[0]] = {};
                 if(curLine[0] == "Shadyside"){
                     target_index = i;
-                    console.log(target_index);
+                    //console.log(target_index);
                 }
                 for(var j = 0; j < curLine.length; j++){
                     //console.log(curLine[j]);
@@ -379,9 +379,9 @@ var Balls = function () {
                 point.fields = pointsData[curLine[0]];
                 datapoints.push(point);
             }
-            console.log("datapoints:");
-            console.log(datapoints);
-            console.log(pointsData);
+            // console.log("datapoints:");
+            // console.log(datapoints);
+            // console.log(pointsData);
 
 
             //draw the graph

@@ -514,7 +514,7 @@ function test_global_lense(){
     testGlobal.filterList[0].max = 3;
     //testGlobal.draw();
 
-    fuiController.lensesList.push(testGlobal);
+    //fuiController.lensesList.push(testGlobal);
 
     //set filter on lense
     testGlobal.callFilters();

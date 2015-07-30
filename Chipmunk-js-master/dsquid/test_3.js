@@ -503,39 +503,4 @@ cp.CircleShape.prototype.draw = function(ctx, scale, point2canvas) {
 	//drawLine(ctx, point2canvas, this.tc, cp.v.mult(this.body.rot, this.r).add(this.tc));
 };
 
-var randColor = function() {
-  return Math.floor(Math.random() * 256);
-};
-
-var styles = [];
-for (var i = 0; i < 100; i++) {
-	styles.push("rgb(" + randColor() + ", " + randColor() + ", " + randColor() + ")");
-}
-
-// cp.Shape.prototype.setStyle = function(r, g, b, a) {
-// 	this.style.r = r;
-// 	this.style.g = g;
-// 	this.style.b = b;
-// 	this.style.a = a;
-// };
-
-// cp.Shape.prototype.getStyle = function() {
-// 	return "rgba(" + this.style.r + "," + this.style.g + "," + this.style.b + "," + this.style.a + ")";
-// };
-
-cp.Shape.prototype.style = function() {
-  var body;
-  if (this.sensor) {
-    return "rgba(255,255,255,0)";
-  } else {
-    body = this.body;
-    if (body.isSleeping()) {
-      return "rgb(50,50,50)";
-    } else if (body.nodeIdleTime > this.space.sleepTimeThreshold) {
-      return "rgb(170,170,170)";
-    } else {
-      return styles[this.hashid % styles.length];
-    }
-  }
-};
 

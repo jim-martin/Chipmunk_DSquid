@@ -24,17 +24,15 @@ Lense.prototype.updateSize = function(rad) {
 };
 
 Lense.prototype.getPoints = function() {
+	var returnVal;
 	//look through all datapoints 
 	this.space.shapeQuery(this.shape, function(b, set){
-		console.log(b);
-		b.setStyle(255, 0, 0, 255);
-	});
-
-	this.space.eachShape(function(shape) {
-		console.log(shape.getStyle());
+		console.log(b.datapoint);
+		returnVal = b;
 	});
 	
 	//return the points inside bounds
+	return returnVal;
 	
 };
 

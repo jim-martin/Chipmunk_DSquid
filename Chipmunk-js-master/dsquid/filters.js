@@ -19,7 +19,7 @@ var Filter = function(){
 
     newFilter.filter_point = function(datapoint){
         //console.log(datapoint.fields[this.header]);
-        if(datapoint.fields[this.header] <= this.max && datapoint.fields[this.header] >= this.min){
+        if(typeof(datapoint) != "undefined" && datapoint.fields[this.header] <= this.max && datapoint.fields[this.header] >= this.min){
             return true;
         }
         else{

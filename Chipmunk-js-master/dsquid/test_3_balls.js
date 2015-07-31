@@ -42,6 +42,13 @@ function init_graph() {
         test_global_lense();
 
 
+
+    setInterval(function(){
+        fuiController.call_all_lenses();
+    },1000);
+
+
+
 }
 
 function populate_picker(){
@@ -512,6 +519,7 @@ var testGlobal;
 function test_global_lense(){
     testGlobal = new Lense(balls.space, 0,0,0);
     testGlobal.filterList[0].max = 3;
+    testGlobal.global = true;
     //testGlobal.draw();
 
     //fuiController.lensesList.push(testGlobal);

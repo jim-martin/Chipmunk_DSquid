@@ -1,7 +1,7 @@
 /*
 Lense object
  */
-var Lense = function(s, centerX, centerY, rad){
+var Wall = function(s, centerX, centerY, rad){
 //if radius == 0 then it is global
 
 
@@ -14,28 +14,30 @@ var Lense = function(s, centerX, centerY, rad){
 		body.setPos(center); //this is a hack to ensure the attractor isn't at length 0 
 
 	var shape = this.shape = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
-		shape.setSensor(true);
-		shape.type = "lense";
+		shape.setSensor(false);
+		shape.type = "wall";
 
     var filterList = this.filterList = [];
 
     this.addFilter(Filter());
 
-    fuiController.lensesList.push(this);
+    fuiController.wallsList.push(this);
+    var mask_bit = this.mask_bit = 1<<(fuiController.wallsList.length);
+    shape.setLayers( ~mask_bit );
 
 };
 
-Lense.prototype.updateSize = function(rad) {
+Wall.prototype.updateSize = function(rad) {
 	this.radius = rad;
 	this.shape.r = rad;
 	this.body.r = rad;
 };
 
-Lense.prototype.getPoints = function() {
-	var returnVal;
+Wall.prototype.getPoints = function() {
+	var returnVal = [];
 	//look through all datapoints 
 	this.space.shapeQuery(this.shape, function(b, set){
-		returnVal = b;
+		returnVal.push(b.datapoint);
 	});
 	
 	//return the points inside bounds
@@ -43,40 +45,45 @@ Lense.prototype.getPoints = function() {
 	
 };
 
-Lense.prototype.draw = function(ctx, scale, point2canvas) {
+Wall.prototype.draw = function(ctx, scale, point2canvas) {
 
 	//console.log("drawinglense");
 	//draw shape based on lense style? nahh, hard code dat shit
 	var c = point2canvas(this.center);
+	ctx.strokeStyle="rgba(0,0,0,255)";
+	ctx.fillStyle="rgba(255,255,255,255)";
 	ctx.beginPath();
 	ctx.arc(c.x, c.y, scale * this.radius, 0, 2*Math.PI, false);
 	ctx.stroke();
 	ctx.closePath();
-
 };
 
-Lense.prototype.addFilter = function(filter) {
+Wall.prototype.addFilter = function(filter) {
 	//add a filter here
     this.filterList.push(filter);
 };
 
-Lense.prototype.callFilters = function(){
+Wall.prototype.callFilters = function(){
     //iterate through all filters
-    var disabled = [];
+    var enabled = [];
     for(var i = 0; i < this.filterList.length; i++){
         //get disabled[] from all of the filters
-        disabled = this.filterList[i].filter_points().disabled;
+        enabled = this.filterList[i].filter_points().enabled;
 
-        //change styling on disabled points
-        for(var j = 0; j < disabled.length; j++){
+        //console.log(enabled);
+        //console.log(this.mask_bit.toString(2));
 
-            var colorString = "rgb(0,255,0)";
-            disabled[j].shape.colorstring = colorString;
 
-            newstyle = function(){
-                return this.colorstring;
-            }
-            // disabled[j].redraw(newstyle);
+
+        //change collision mask based on filters
+        for(var j = 0; j < enabled.length; j++){
+
+        	console.log("datapoint mask: " + (enabled[j].shape.layers | this.mask_bit).toString(2));
+        	console.log("wall mask: " + (this.shape.layers).toString(2));
+
+        	enabled[j].shape.setLayers(enabled[j].shape.layers | this.mask_bit);
+
         }
+
     }
 }

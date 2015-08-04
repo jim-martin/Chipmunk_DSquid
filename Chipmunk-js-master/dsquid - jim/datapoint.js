@@ -15,6 +15,7 @@ var Datapoint = function( s , targetx, targety ) {
 		shape.setElasticity(0.8);
 		shape.setFriction(1);
 		shape.datapoint = this;
+		shape.type = "datapoint";
 
 	//define targetbody
 	var targetBody = this.targetBody = new cp.Body(Infinity, Infinity);

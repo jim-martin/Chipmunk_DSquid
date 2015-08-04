@@ -21,7 +21,6 @@ var Lense = function(s, centerX, centerY, rad){
     var global = this.global = false;
 
     this.addFilter(Filter());
-
     fuiController.lensesList.push(this);
 
 };

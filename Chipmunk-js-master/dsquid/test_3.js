@@ -2,8 +2,7 @@ var v = cp.v;
 
 var ctx;
 
-var GRABABLE_MASK_BIT = 1<<30;
-var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
+var DATAPOINT_MASK_BIT = 1<<30;
 
 var datapoints = [];
 var filterChanged = false;
@@ -54,7 +53,7 @@ var Test = function() {
 		if(!rightclick && !self.mouseJoint) {
 			var point = canvas2point(e.clientX, e.clientY);
 		
-			var shape = space.pointQueryFirst(point, GRABABLE_MASK_BIT, cp.NO_GROUP);
+			var shape = space.pointQueryFirst(point, cp.ALL_LAYERS, cp.NO_GROUP);
 			if(shape){
 				var body = shape.body;
 				var mouseJoint = self.mouseJoint = new cp.PivotJoint(mouseBody, body, v(0,0), body.world2Local(point));
@@ -63,13 +62,23 @@ var Test = function() {
 				mouseJoint.errorBias = Math.pow(1 - 0.15, 60);
 				space.addConstraint(mouseJoint);
 
+				if(shape.type == "datapoint"){
+					console.log(shape.datapoint.mask_bit.toString(2));
+				}
+
                 //check for lense
                 //make dirty
                 if(shape.type == "lense"){
                     dirty = true;
+                    //replace dragging with scaling behavior if the click is on the edge.
+
                 }
 
-				console.log(shape.datapoint);
+                if(shape.type == "wall"){
+                	//replace dragging with scaling behavior if the click is on the edge.
+                	console.log(shape.wall.mask_bit.toString(2));
+                }
+
 			}else{
 
 				//log start point of selection (also servers as bool for draw call)
@@ -342,7 +351,9 @@ Test.prototype.beginTransition = function(){
 	var self = this;
 	var targetShapes = [];
 	this.space.eachShape(function(shape){
-		targetShapes.push(shape);
+		if(shape.type == "datapoint"){
+			targetShapes.push(shape);
+		}
 	});
 
 	//turn off collisions by placing each body on the 0 collision layer
@@ -376,7 +387,7 @@ Test.prototype.endTransitionOnRest = function( targetShapes ){
 
 	if(v.lengthsq(lowVec) < velocityThresh){
 		for (var i = 0; i < targetShapes.length; i++) {
-			targetShapes[i].setLayers(GRABABLE_MASK_BIT);
+			targetShapes[i].setLayers(targetShapes[i].datapoint.mask_bit);
 		}
 		// console.log("transition complete");
 	}else{

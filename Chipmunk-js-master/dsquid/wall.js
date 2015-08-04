@@ -16,14 +16,15 @@ var Wall = function(s, centerX, centerY, rad){
 	var shape = this.shape = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
 		shape.setSensor(false);
 		shape.type = "wall";
+		shape.wall = this;
 
     var filterList = this.filterList = [];
 
     this.addFilter(Filter());
-
     fuiController.wallsList.push(this);
+
     var mask_bit = this.mask_bit = 1<<(fuiController.wallsList.length);
-    shape.setLayers( ~mask_bit );
+    shape.setLayers( mask_bit );
 
 };
 
@@ -65,23 +66,21 @@ Wall.prototype.addFilter = function(filter) {
 
 Wall.prototype.callFilters = function(){
     //iterate through all filters
-    var enabled = [];
+    var disabled = [];
     for(var i = 0; i < this.filterList.length; i++){
         //get disabled[] from all of the filters
-        enabled = this.filterList[i].filter_points().enabled;
+        disabled = this.filterList[i].filter_points().enabled;
 
-        //console.log(enabled);
+        console.log(disabled);
         //console.log(this.mask_bit.toString(2));
 
 
 
         //change collision mask based on filters
-        for(var j = 0; j < enabled.length; j++){
+        for(var j = 0; j < disabled.length; j++){
 
-        	console.log("datapoint mask: " + (enabled[j].shape.layers | this.mask_bit).toString(2));
-        	console.log("wall mask: " + (this.shape.layers).toString(2));
-
-        	enabled[j].shape.setLayers(enabled[j].shape.layers | this.mask_bit);
+        	disabled[j].mask_bit = disabled[j].shape.layers | this.mask_bit;
+        	disabled[j].shape.setLayers(disabled[j].mask_bit);
 
         }
 

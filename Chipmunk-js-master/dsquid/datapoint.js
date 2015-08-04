@@ -15,6 +15,8 @@ var Datapoint = function( s , targetx, targety ) {
 		shape.setElasticity(0.8);
 		shape.setFriction(1);
 		shape.datapoint = this;
+		shape.type = "datapoint";
+
 
 	//define targetbody
 	var targetBody = this.targetBody = new cp.Body(Infinity, Infinity);
@@ -32,6 +34,8 @@ var Datapoint = function( s , targetx, targety ) {
     var alpha = this.alpha = 1;
     var highlighted = this.highlighted = false;
     var filteredOut = this.filteredOut = false;
+
+    var mask_bit = this.mask_bit = DATAPOINT_MASK_BIT;
 };
 
 Datapoint.prototype.moveTarget = function( x, y ){
@@ -87,5 +91,8 @@ function clean_all_datapoints(){
     for(var i = 0; i < datapoints.length; i++){
         datapoints[i].filteredOut = false;
         datapoints[i].highlighted = false;
+
+        //for wall
+        datapoints[i].mask_bit = DATAPOINT_MASK_BIT;
     }
 }

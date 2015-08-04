@@ -78,10 +78,12 @@ Wall.prototype.callFilters = function(){
         //change collision mask based on filters
         for(var j = 0; j < enabled.length; j++){
 
-        	console.log("datapoint mask: " + (enabled[j].shape.layers | this.mask_bit).toString(2));
-        	console.log("wall mask: " + (this.shape.layers).toString(2));
+        	// console.log("datapoint mask: " + (enabled[j].shape.layers | this.mask_bit).toString(2));
+        	// console.log("wall mask: " + (this.shape.layers).toString(2));
 
-        	enabled[j].shape.setLayers(enabled[j].shape.layers | this.mask_bit);
+
+        	enabled[j].mask_bit = enabled[j].shape.layers | this.mask_bit;
+        	enabled[j].shape.setLayers(enabled[j].mask_bit);
 
         }
 

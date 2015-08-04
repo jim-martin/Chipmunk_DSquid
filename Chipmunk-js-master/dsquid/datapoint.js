@@ -93,6 +93,6 @@ function clean_all_datapoints(){
         datapoints[i].highlighted = false;
 
         //for wall
-        datapoints[i].mask_bit = DATAPOINT_MASK_BIT;
+        //datapoints[i].mask_bit = DATAPOINT_MASK_BIT;
     }
 }

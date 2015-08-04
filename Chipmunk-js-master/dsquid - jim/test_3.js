@@ -358,7 +358,7 @@ Test.prototype.endTransitionOnRest = function( targetShapes ){
 
 	if(v.lengthsq(lowVec) < velocityThresh){
 		for (var i = 0; i < targetShapes.length; i++) {
-			targetShapes[i].setLayers(GRABABLE_MASK_BIT);
+			targetShapes[i].setLayers(shape.datapoint.mask_bit);
 		}
 		// console.log("transition complete");
 	}else{

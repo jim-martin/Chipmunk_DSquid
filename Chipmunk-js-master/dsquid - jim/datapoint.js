@@ -1,4 +1,4 @@
-//define a datapoint that contains:
+s//define a datapoint that contains:
 //	- the shape/body to be drawn
 //	- an attractor that connects the shape/body to the targetBody
 //	- a targetBody that represents the proper location of the data(connected to attractor)

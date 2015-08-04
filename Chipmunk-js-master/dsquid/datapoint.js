@@ -24,12 +24,41 @@ var Datapoint = function( s , targetx, targety ) {
 	var attractor = this.attractor = new cp.AttractorJoint(targetBody, body);
 	space.addConstraint(attractor);
 
-	var style = this.style = "rgba(255,255,255,255)";
+	var style = this.style = "rgba(0,255,0,255)";
+
+    var red = this.red = 0;
+    var green = this.green = 255;
+    var blue = this.blue = 0;
+    var alpha = this.alpha = 1;
+    var highlighted = this.highlighted = false;
+    var filteredOut = this.filteredOut = false;
 };
 
 Datapoint.prototype.moveTarget = function( x, y ){
 	this.targetBody.setPos(v(x, y));
 };
+
+Datapoint.prototype.getStyle = function(){
+    var curRed = this.red;
+    var curGreen = this.green;
+    var curBlue = this.blue;
+    var curAlpha = this.alpha;
+
+    //make hot pink if highlighted
+    if(this.highlighted == true){
+        curRed = 255;
+        curGreen = 20;
+        curBlue = 147;
+    }
+
+    //make translucent if filteredOut
+    if(this.filteredOut == true){
+        curAlpha = .1;
+    }
+    //this.style = "rgba("+curRed+","+curGreen+","+curBlue+","+curAlpha+")";
+    return "rgba("+curRed+","+curGreen+","+curBlue+","+curAlpha+")";
+}
+
 
 Datapoint.prototype.draw = function(ctx, scale, point2canvas) {
 
@@ -41,7 +70,8 @@ Datapoint.prototype.draw = function(ctx, scale, point2canvas) {
 	var c = point2canvas(this.shape.tc);	
 	ctx.beginPath();
 		ctx.strokeStyle="rgba(0,0,0,255)";
-		ctx.fillStyle = this.style;
+
+		ctx.fillStyle = this.getStyle();
 
 		ctx.arc(c.x, c.y, scale * this.radius, 0, 2*Math.PI, false);
 		ctx.fill();
@@ -52,3 +82,10 @@ Datapoint.prototype.draw = function(ctx, scale, point2canvas) {
 cp.Shape.prototype.pairDataPoint = function(d) {
 	this.dataPoint = d;
 };
+
+function clean_all_datapoints(){
+    for(var i = 0; i < datapoints.length; i++){
+        datapoints[i].filteredOut = false;
+        datapoints[i].highlighted = false;
+    }
+}

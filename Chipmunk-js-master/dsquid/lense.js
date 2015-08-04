@@ -18,6 +18,7 @@ var Lense = function(s, centerX, centerY, rad){
 		shape.type = "lense";
 
     var filterList = this.filterList = [];
+    var global = this.global = false;
 
     this.addFilter(Filter());
 
@@ -32,13 +33,14 @@ Lense.prototype.updateSize = function(rad) {
 };
 
 Lense.prototype.getPoints = function() {
-	var returnVal;
+	var returnVal = [];
 	//look through all datapoints 
 	this.space.shapeQuery(this.shape, function(b, set){
-		returnVal = b;
+		returnVal.push(b.datapoint);
 	});
 	
 	//return the points inside bounds
+    //console.log(returnVal);
 	return returnVal;
 	
 };
@@ -63,20 +65,25 @@ Lense.prototype.addFilter = function(filter) {
 Lense.prototype.callFilters = function(){
     //iterate through all filters
     var disabled = [];
+
+
     for(var i = 0; i < this.filterList.length; i++){
         //get disabled[] from all of the filters
-        disabled = this.filterList[i].filter_points().disabled;
+        if(this.global == false){
+            disabled = this.filterList[i].filter_points(this.getPoints()).disabled;
+        }
+        else{
+            disabled = this.filterList[i].filter_points().disabled;
+        }
+        //console.log(disabled);
 
         //change styling on disabled points
         for(var j = 0; j < disabled.length; j++){
-
-            var colorString = "rgb(0,255,0)";
-            disabled[j].shape.colorstring = colorString;
-
-            newstyle = function(){
-                return this.colorstring;
+            //console.log(disabled[j]);
+            if(typeof(disabled[j]) != "undefined"){
+                disabled[j].filteredOut = true;
             }
-            // disabled[j].redraw(newstyle);
+
         }
     }
 }

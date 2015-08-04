@@ -87,7 +87,7 @@ var filterUIController = function(){
         $(max_field).val(min_max.max);
 
         //redraw
-        position_points();
+        call_all_lenses();
     }
 
     //takes updates from numbers (DOM) for a single filter and updates it in the object
@@ -105,7 +105,7 @@ var filterUIController = function(){
         curFilter.max = $(max_field).val();
 
         //redraw
-        position_points();
+        call_all_lenses();
     }
 
     //removes filter from dom and object
@@ -142,6 +142,7 @@ var filterUIController = function(){
         $(a).parent().remove();
 
         //redraw
+        call_all_lenses();
     }
 
     //returns the filter with the corresponding id
@@ -174,6 +175,13 @@ var filterUIController = function(){
             }
         }
         return curFilter;
+    }
+
+    var call_all_lenses = this.call_all_lenses = function(){
+        clean_all_datapoints();
+        for(var i = 0; i < lensesList.length; i++){
+            lensesList[i].callFilters();
+        }
     }
 }
 

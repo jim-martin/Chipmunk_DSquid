@@ -8,6 +8,8 @@ var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
 var datapoints = [];
 var filterChanged = false;
 
+var dirty = false;
+
 
 //utility function to call 'fn' with a delay (prolly shouldn't be global...)
 var soon = function(fn) { setTimeout(fn, 1); };
@@ -61,6 +63,12 @@ var Test = function() {
 				mouseJoint.errorBias = Math.pow(1 - 0.15, 60);
 				space.addConstraint(mouseJoint);
 
+                //check for lense
+                //make dirty
+                if(shape.type == "lense"){
+                    dirty = true;
+                }
+
 				console.log(shape.datapoint);
 			}else{
 
@@ -81,13 +89,13 @@ var Test = function() {
 	this.canvas.onmouseup = function(e) {
 		var rightclick = e.which === 3; // or e.button === 2;
 		self.mouse = canvas2point(e.clientX, e.clientY);
-
 		if(!rightclick) {
 			if(self.mouseJoint) {
 				space.removeConstraint(self.mouseJoint);
 				self.mouseJoint = null;
 			}
 
+            //if selection is being dragged
 			if(self.tempSelection){
 				//commit selection area 
 				
@@ -95,6 +103,9 @@ var Test = function() {
 				self.tempSelection.getPoints();
 				self.tempSelection = null;
 				console.log("selectionEnd");
+
+                //make dirty
+                dirty = true;
 
 			}
 		}
@@ -195,6 +206,13 @@ Test.prototype.draw = function() {
 			datapoints[i].draw(ctx, self.scale, self.point2canvas);
 		ctx.restore();
 	}
+
+    //refilter if dirty
+    if(dirty == true){
+        console.log("refiltering");
+        fuiController.call_all_lenses();
+        dirty = false;
+    }
 
 
 	// Draw collisions

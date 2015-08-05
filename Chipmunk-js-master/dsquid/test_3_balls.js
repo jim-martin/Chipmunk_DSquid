@@ -45,7 +45,7 @@ function init_graph() {
 
     setInterval(function(){
         fuiController.call_all_lenses();
-    },1000);
+    },100);
 
 
 

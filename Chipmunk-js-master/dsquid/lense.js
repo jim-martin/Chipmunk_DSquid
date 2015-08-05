@@ -37,7 +37,7 @@ Lense.prototype.getPoints = function() {
 	var returnVal = [];
 	//look through all datapoints 
 	this.space.shapeQuery(this.shape, function(b, set){
-		console.log(b.datapoint);
+		//console.log(b.datapoint);
 		returnVal.push(b.datapoint);
 	});
 	

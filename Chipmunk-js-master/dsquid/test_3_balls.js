@@ -11,8 +11,6 @@ var target_index;
 
 var view_sequence = [];
 
-var undo_stack = [];
-
 var colorDim;
 var sizeDim;
 var xDim;
@@ -63,6 +61,9 @@ function populate_picker(){
     }
 
     $("td").on("click", function(){
+
+        //store the old dimensions
+        var old_dimension = { xDim: xDim, yDim: yDim, sizeDim: sizeDim, colorDim: colorDim };
         //get class
         //set all of that class to background clear
         if($(this).hasClass("column1")){
@@ -94,7 +95,27 @@ function populate_picker(){
             colorDim = $(this).siblings()[0].innerHTML;
         }
 
-        position_points();
+        //store the new dim
+        var new_dimension = { xDim: xDim, yDim: yDim, sizeDim: sizeDim, colorDim: colorDim };
+
+
+        //create a command object with the old and new dim
+        var view_command = Object.create(Command);
+            view_command.new_dim = new_dimension;
+            view_command.old_dim = old_dimension;
+
+        //overright the execute and undo functions of that command object with positionpoints()
+            view_command.execute = function(){
+                position_points(this.new_dim);
+            }
+
+            view_command.undo = function(){
+                position_points(this.old_dim);
+            }
+
+        stack.PushCommand( view_command );
+
+        // position_points();
     })
 }
 
@@ -118,11 +139,22 @@ function get_shape_info(index){
 }
 
 //rescale
-function set_scale(){
-    var x_var = xDim;
-    var y_var = yDim;
-    var color_var = colorDim;
-    var size_var = sizeDim;
+function set_scale( dimensions ){
+    if(dimensions != null){ 
+
+        var x_var = dimensions.xDim;
+        var y_var = dimensions.yDim;
+        var color_var = dimensions.colorDim;
+        var size_var = dimensions.sizeDim;
+
+    }else{ //legacy functionality if no arg is supplied
+
+        var x_var = xDim;
+        var y_var = yDim;
+        var color_var = colorDim;
+        var size_var = sizeDim;
+
+    }
     xScale = 0;
     yScale = 0;
     colorScale = 0;
@@ -168,19 +200,30 @@ function get_scale(header){
     return {min: min, max: max};
 }
 
-function position_points() {
+function position_points( dimensions ) {
 
     console.log("position points");
 
-    var x_var = xDim;
-    var y_var = yDim;
-    var color_var = colorDim;
-    var size_var = sizeDim;
+    if(dimensions != null){ 
+
+        var x_var = dimensions.xDim;
+        var y_var = dimensions.yDim;
+        var color_var = dimensions.colorDim;
+        var size_var = dimensions.sizeDim;
+
+    }else{ //legacy functionality if no arg is supplied
+
+        var x_var = xDim;
+        var y_var = yDim;
+        var color_var = colorDim;
+        var size_var = sizeDim;
+
+    }
 
 
 
     balls.beginTransition();
-    set_scale();
+    set_scale( dimensions );
 
     for (var i = 0; i < datapoints.length; i++) {
         var xPos = datapoints[i].fields[x_var];
@@ -251,6 +294,7 @@ function position_points() {
     //console.log(datapoints);
 }
 
+
 function push_view(){
     //push new ViewCommand with
     //new axes
@@ -266,17 +310,7 @@ function push_view(){
 
     var new_view_command = new ViewCommand(new_view, old_view);
     new_view_command.execute();
-    undo_stack.push(new_view_command);
 }
-
-var ViewCommand = function(new_view, old_view){
-    this.new_view = new_view;
-    this.old_view = old_view;
-
-    this.execute = execute;
-    this.undo = undo;
-}
-
 
 var temp_view = [];
 function open_picker(){

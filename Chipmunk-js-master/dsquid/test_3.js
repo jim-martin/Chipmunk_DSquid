@@ -3,7 +3,6 @@ var v = cp.v;
 var ctx;
 
 var DATAPOINT_MASK_BIT = 1<<30;
-
 var datapoints = [];
 var filterChanged = false;
 
@@ -29,6 +28,10 @@ var Test = function() {
 	this.point2canvas = function(point) {
 			return v(point.x * self.scale, (480 - point.y) * self.scale);
 	};
+
+
+	// listen for keyboard events when the canvas is active
+	window.addEventListener("keydown", this.handle_key_press, false);
 
 
 	// HACK HACK HACK - its awful having this here, and its going to break when we
@@ -186,6 +189,27 @@ Test.prototype.drawInfo = function() {
 
 	if (this.message) {
 		this.ctx.fillText(this.message, 10, this.height - 50, maxWidth);
+	}
+};
+
+
+Test.prototype.handle_key_press = function(e) {
+
+	var code = e.keyCode;
+	
+	if(code == 90){
+
+		if(e.ctrlKey && !e.shiftKey){
+			console.log("undo");
+			stack.StepBackward();
+		}
+
+		if(e.ctrlKey && e.shiftKey){
+			console.log("redo");
+			stack.StepForward();
+
+		}
+
 	}
 };
 

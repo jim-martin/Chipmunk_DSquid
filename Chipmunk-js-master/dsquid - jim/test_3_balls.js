@@ -40,10 +40,10 @@ function init_graph() {
         test_global_lense();
 
 
-
     setInterval(function(){
         fuiController.call_all_lenses();
-    },100);
+    },1000);
+
 
 
 

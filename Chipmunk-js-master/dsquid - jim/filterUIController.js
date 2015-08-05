@@ -25,90 +25,36 @@ var filterUIController = function(){
 
     var repopulate_filter_panel = function(){
         //clear boxes
-        $(".globalFilters").html("");
+        $("#globalList").html("");
         $("#lenseList").html("");
         $("#wallList").html("");
 
-        $("#filters").html("");
-
-        //repopulate global filters and lenses
+        //repopulate
         for(var k = 0; k < lensesList.length; k++) {
+            for (var p = 0; p < lensesList[k].filterList.length; p++) {
+                var curFilter = lensesList[k].filterList[p];
 
-            //given lense 0 = global filters
-            if(k == 0){
+                //curFilter.id is just incremented as filters are created
+                var newFilter = $('<div filter_id="' + curFilter.id + '"><select onchange="fuiController.filter_update_axes(this, '+curFilter.id+')">Axes</select> Min: <input type="number"  onchange="fuiController.filter_update_numbers(this, '+curFilter.id+')"> Max: <input type="number" onchange="fuiController.filter_update_numbers(this, '+curFilter.id+')"><span onclick="fuiController.remove_filter(this, '+curFilter.id+')"> Remove</span></div>');
+                $("#lenseList").append(newFilter);
 
-                var lenseCard = $('<div class="objectCard"> <div class="objectTopBar"> <h2>Global Filters</h2> </div> <div objectType="global" number="'+k+'" class="globalFilters filterList"> </div> </div>');
-                $("#filters").append(lenseCard);
+                var newSelect = newFilter.children("select")[0];
 
-                //populate global filter UI
-                for (var p = 0; p < lensesList[k].filterList.length; p++) {
-                    var curFilter = lensesList[k].filterList[p];
-
-                    //curFilter.id is just incremented as filters are created
-                    var newFilter = $('<div filter_id="' + curFilter.id + '"><select onchange="fuiController.filter_update_axes(this, '+curFilter.id+')">Axes</select> Min: <input type="number"  onchange="fuiController.filter_update_numbers(this, '+curFilter.id+')"> Max: <input type="number" onchange="fuiController.filter_update_numbers(this, '+curFilter.id+')"><span onclick="fuiController.remove_filter(this, '+curFilter.id+')"> Remove</span></div>');
-                    var newFilterRow = $('<div class="filterRow"></div>');
-                    newFilterRow.append(newFilter);
-
-                    $(".globalFilters").append(newFilterRow);
-
-                    var newSelect = newFilter.children("select")[0];
-
-
-
-                    //populate select
-                    for (var i = 1; i < headers.length; i++) {
-                        newSelect.options[i - 1] = new Option(headers[i], headers[i]);
-                    }
-
-                    //set selected
-                    $(newSelect).val(curFilter.header);
-
-                    //populate values in min / max
-                    min_field = newFilter.children("[type='number']")[0];
-                    max_field = newFilter.children("[type='number']")[1];
-
-                    $(min_field).val(curFilter.min);
-                    $(max_field).val(curFilter.max);
+                //populate select
+                for (var i = 1; i < headers.length; i++) {
+                    newSelect.options[i - 1] = new Option(headers[i], headers[i]);
                 }
+
+                //set selected
+                $(newSelect).val(curFilter.header);
+
+                //populate values in min / max
+                min_field = newFilter.children("[type='number']")[0];
+                max_field = newFilter.children("[type='number']")[1];
+
+                $(min_field).val(curFilter.min);
+                $(max_field).val(curFilter.max);
             }
-
-            //for lense > 0 - create new lense UI component
-            if(k > 0){
-
-                var lenseCard = $('<div class="objectCard"> <div class="objectTopBar"> <h2>Lense '+k+'</h2> </div> <div objectType="lense" number="'+k+'" class="lenseFilters filterList"> </div> </div>');
-                $("#filters").append(lenseCard);
-
-
-                for (var p = 0; p < lensesList[k].filterList.length; p++) {
-                    var curFilter = lensesList[k].filterList[p];
-
-                    //curFilter.id is just incremented as filters are created
-                    var newFilter = $('<div filter_id="' + curFilter.id + '"><select onchange="fuiController.filter_update_axes(this, '+curFilter.id+')">Axes</select> Min: <input type="number"  onchange="fuiController.filter_update_numbers(this, '+curFilter.id+')"> Max: <input type="number" onchange="fuiController.filter_update_numbers(this, '+curFilter.id+')"><span onclick="fuiController.remove_filter(this, '+curFilter.id+')"> Remove</span></div>');
-                    $($(lenseCard).children()[1]).append(newFilter);
-
-                    var newSelect = newFilter.children("select")[0];
-
-                    //populate select
-                    for (var i = 1; i < headers.length; i++) {
-                        newSelect.options[i - 1] = new Option(headers[i], headers[i]);
-                    }
-
-                    //set selected
-                    $(newSelect).val(curFilter.header);
-
-                    //populate values in min / max
-                    min_field = newFilter.children("[type='number']")[0];
-                    max_field = newFilter.children("[type='number']")[1];
-
-                    $(min_field).val(curFilter.min);
-                    $(max_field).val(curFilter.max);
-                }
-            }
-        }
-
-        for(var k = 0; k < wallsList.length; k++){
-            console.log("populating wall "+k);
-
         }
     }
 
@@ -141,7 +87,7 @@ var filterUIController = function(){
         $(max_field).val(min_max.max);
 
         //redraw
-        call_all_lenses();
+        position_points();
     }
 
     //takes updates from numbers (DOM) for a single filter and updates it in the object
@@ -159,7 +105,7 @@ var filterUIController = function(){
         curFilter.max = $(max_field).val();
 
         //redraw
-        call_all_lenses();
+        position_points();
     }
 
     //removes filter from dom and object
@@ -196,7 +142,6 @@ var filterUIController = function(){
         $(a).parent().remove();
 
         //redraw
-        call_all_lenses();
     }
 
     //returns the filter with the corresponding id
@@ -229,13 +174,6 @@ var filterUIController = function(){
             }
         }
         return curFilter;
-    }
-
-    var call_all_lenses = this.call_all_lenses = function(){
-        clean_all_datapoints();
-        for(var i = 0; i < lensesList.length; i++){
-            lensesList[i].callFilters();
-        }
     }
 }
 

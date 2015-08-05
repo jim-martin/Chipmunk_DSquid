@@ -2,66 +2,15 @@ var v = cp.v;
 
 var ctx;
 
-var GRABABLE_MASK_BIT = 1<<31;
+var GRABABLE_MASK_BIT = 1<<30;
 var NOT_GRABABLE_MASK = ~GRABABLE_MASK_BIT;
 
-//define an attractor joint
-var AttractorJoint = cp.AttractorJoint = function( a, b )
-{
-	cp.Constraint.call(this, a, b);
-
-};
-
-AttractorJoint.prototype = Object.create(cp.Constraint.prototype);
-
-AttractorJoint.prototype.prestep = function(dt){
-	//can't seem to call this function, or it isn't called. (were does this call come from?)
-};
-
-AttractorJoint.prototype.applyImpulse = function(){
-	var mod = 0.5;
-	var delta = v.sub(this.a.p, this.b.p);
-	var impulse = this.impulse =  v.normalize(delta);
-
-	var r = v(1,1);
-	//apply_impulse(this.b, impulse.x, impulse.y, r); -- not accesible outside of cp
-	this.b.applyImpulse(impulse, r);
-};
-
-AttractorJoint.prototype.getImpulse = function(){
-	return Math.abs(this.impulse);
-};
+var datapoints = [];
+var filterChanged = false;
 
 
-//define a datapoint that contains:
-//	- the shape to be drawn
-//	- a list of attractors
-//	- a list of target bodies (connected to attractors)
-var Datapoint = function( s , targetx, targety ) {
-	var space = this.space = s;
-
-	var radius = this.radius = 4;
-	var mass = this.mass = 3;
-
-	var body = this.body = space.addBody(new cp.Body(mass, cp.momentForCircle(mass, 0, radius, v(0, 0))));
-		body.setPos(v(targetx, targety));
-
-	this.shape = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
-		shape.setElasticity(0.8);
-		shape.setFriction(1);
-
-	//define targetbody
-	var targetBody = this.targetBody = new cp.Body(Infinity, Infinity);
-	targetBody.setPos(v(targetx, targety));
-
-	//add attractor
-	var attractor = this.attractor = new cp.AttractorJoint(targetBody, body);
-	space.addConstraint(attractor);
-};
-
-Datapoint.prototype.moveTarget = function( x, y ){
-	this.targetBody.setPos(v(x, y));
-};
+//utility function to call 'fn' with a delay (prolly shouldn't be global...)
+var soon = function(fn) { setTimeout(fn, 1); };
 
 var Test = function() {
 	var space = this.space = new cp.Space();
@@ -71,7 +20,7 @@ var Test = function() {
 	this.simulationTime = 0;
 	this.drawTime = 0;
 
-	var self = this;
+ 	var self = this;
 	var canvas2point = this.canvas2point = function(x, y) {
 		return v(x / self.scale, 480 - y / self.scale);
 	};
@@ -80,10 +29,15 @@ var Test = function() {
 			return v(point.x * self.scale, (480 - point.y) * self.scale);
 	};
 
+
 	// HACK HACK HACK - its awful having this here, and its going to break when we
 	// have multiple tests open at the same time.
 	this.canvas.onmousemove = function(e) {
 		self.mouse = canvas2point(e.clientX, e.clientY);
+
+		if(self.tempSelection != null){
+			self.tempSelection.updateSize(v.dist(self.tempSelection.center, self.mouse));
+		}
 	};
 
 	var mouseBody = this.mouseBody = new cp.Body(Infinity, Infinity);
@@ -103,35 +57,19 @@ var Test = function() {
 				var body = shape.body;
 				var mouseJoint = self.mouseJoint = new cp.PivotJoint(mouseBody, body, v(0,0), body.world2Local(point));
 
-				mouseJoint.maxForce = 50000;
+				mouseJoint.maxForce = 50000000;
 				mouseJoint.errorBias = Math.pow(1 - 0.15, 60);
 				space.addConstraint(mouseJoint);
+
+				console.log(shape.datapoint);
 			}else{
-				//get all the bodies
-				self.targetBodies = [];
-				space.eachBody(function(body){
-					self.targetBodies.push(body);
-				});
 
-				self.targetShapes = [];
-				space.eachShape(function(shape){
-					self.targetShapes.push(shape);
-				});
+				//log start point of selection (also servers as bool for draw call)
+				self.tempSelection = new Wall(self.space, self.mouse.x, self.mouse.y, 0);
+				console.log("selectionStart");
 
-				//turn off collisions by placing each body on it's own collision layer
-				for (var i = 0; i < self.targetShapes.length; i++) {
-					self.targetShapes[i].setLayers(0);
-				}
+				//start tracking selection area
 
-				//define attractors as constraints
-				self.mouseAttractors = [];
-				for (var i = 0; i < self.targetBodies.length; i++) {
-					var mouseAttractor = new cp.AttractorJoint(mouseBody, self.targetBodies[i]);
-					self.mouseAttractors.push(mouseAttractor);
-					space.addConstraint(self.mouseAttractors[i]);
-				}
-
-				self.targetBodies = null;
 			}
 		}
 
@@ -150,16 +88,14 @@ var Test = function() {
 				self.mouseJoint = null;
 			}
 
-			if(self.mouseAttractors){
-				for (var i = 0; i < self.mouseAttractors.length; i++) {
-					space.removeConstraint(self.mouseAttractors[i]);
-					self.mouseAttractors[i] = null;
-				}
-				self.mouseAttractors = null;
+			if(self.tempSelection){
+				//commit selection area 
+				
+				//stop tracking selection
+				self.tempSelection.getPoints();
+				self.tempSelection = null;
+				console.log("selectionEnd");
 
-				for (var i = 0; i < self.targetShapes.length; i++) {
-					self.targetShapes[i].setLayers(GRABABLE_MASK_BIT);
-				}
 			}
 		}
 
@@ -233,6 +169,7 @@ Test.prototype.drawInfo = function() {
 	}
 };
 
+
 Test.prototype.draw = function() {
 	var ctx = this.ctx;
 
@@ -245,10 +182,20 @@ Test.prototype.draw = function() {
 	this.ctx.font = "16px sans-serif";
 	this.ctx.lineCap = 'round';
 
-	this.space.eachShape(function(shape) {
-		ctx.fillStyle = shape.style();
-		shape.draw(ctx, self.scale, self.point2canvas);
-	});
+	//re-apply filters if anything has changed in the last frame
+	if(filterChanged){
+
+		console.log(fuiController);
+
+	}
+	
+	
+	for (var i = 0; i < datapoints.length; i++) {
+		ctx.save();
+			datapoints[i].draw(ctx, self.scale, self.point2canvas);
+		ctx.restore();
+	}
+
 
 	// Draw collisions
 /*  
@@ -295,7 +242,17 @@ Test.prototype.draw = function() {
 		}
 	});
 
-	this.drawInfo();
+	//this.drawInfo();
+
+	//draw lenses from fuicontroller
+	for (var i = 0; i < fuiController.lensesList.length; i++) {
+		fuiController.lensesList[i].draw(ctx, self.scale, self.point2canvas);
+	};
+
+	//draw walls from fuicontroller
+	for (var i = 0; i < fuiController.wallsList.length; i++) {
+		fuiController.wallsList[i].draw(ctx, self.scale, self.point2canvas);
+	};
 };
 
 Test.prototype.run = function() {
@@ -315,8 +272,6 @@ Test.prototype.run = function() {
 
 	step(0);
 };
-
-var soon = function(fn) { setTimeout(fn, 1); };
 
 Test.prototype.benchmark = function() {
 	this.draw();
@@ -365,26 +320,57 @@ Test.prototype.step = function(dt) {
 	}
 };
 
-Test.prototype.addFloor = function() {
-	var space = this.space;
-	var floor = space.addShape(new cp.SegmentShape(space.staticBody, v(0, 0), v(640, 0), 0));
-	floor.setElasticity(1);
-	floor.setFriction(1);
-	floor.setLayers(NOT_GRABABLE_MASK);
+Test.prototype.beginTransition = function(){
+	var self = this;
+	var targetShapes = [];
+	this.space.eachShape(function(shape){
+		targetShapes.push(shape);
+	});
+
+	//turn off collisions by placing each body on the 0 collision layer
+	for (var i = 0; i < targetShapes.length; i++) {
+		targetShapes[i].setLayers(0);
+	}
+
+	var fn = function(){
+		self.endTransitionOnRest( targetShapes );
+	};
+	setTimeout(fn, 1000);
 };
 
-Test.prototype.addWalls = function() {
-	var space = this.space;
-	var wall1 = space.addShape(new cp.SegmentShape(space.staticBody, v(0, 0), v(0, 480), 0));
-	wall1.setElasticity(1);
-	wall1.setFriction(1);
-	wall1.setLayers(NOT_GRABABLE_MASK);
+Test.prototype.endTransitionOnRest = function( targetShapes ){
+	
+	var self = this;
+	var velocityThresh = 5;
+	var lowVec = v(10000,10000); //hack to start the iterator off right
 
-	var wall2 = space.addShape(new cp.SegmentShape(space.staticBody, v(640, 0), v(640, 480), 0));
-	wall2.setElasticity(1);
-	wall2.setFriction(1);
-	wall2.setLayers(NOT_GRABABLE_MASK);
+	var fn = function(){
+		self.endTransitionOnRest( targetShapes );
+	};
+
+	//check the speed of the bodies in question, store the fastest one.
+	for (var i = 0; i < targetShapes.length; i++) {
+		var tempVec = v(targetShapes[i].body.vx, targetShapes[i].body.vy);
+		if (v.lengthsq(tempVec) < v.lengthsq(lowVec)){
+			lowVec = tempVec;
+		}
+	}
+
+	if(v.lengthsq(lowVec) < velocityThresh){
+		for (var i = 0; i < targetShapes.length; i++) {
+			targetShapes[i].setLayers(shape.datapoint.mask_bit);
+		}
+		// console.log("transition complete");
+	}else{
+		setTimeout(fn, 1000);
+		// console.log("transition continuing");
+	}
+
+
 };
+
+
+
 
 // Drawing helper methods
 
@@ -394,6 +380,7 @@ var drawCircle = function(ctx, scale, point2canvas, c, radius) {
 	ctx.arc(c.x, c.y, scale * radius, 0, 2*Math.PI, false);
 	ctx.fill();
 	ctx.stroke();
+	ctx.closePath();
 };
 
 var drawLine = function(ctx, point2canvas, a, b) {
@@ -403,6 +390,7 @@ var drawLine = function(ctx, point2canvas, a, b) {
 	ctx.moveTo(a.x, a.y);
 	ctx.lineTo(b.x, b.y);
 	ctx.stroke();
+	ctx.closePath();
 };
 
 cp.PolyShape.prototype.draw = function(ctx, scale, point2canvas)
@@ -420,6 +408,7 @@ cp.PolyShape.prototype.draw = function(ctx, scale, point2canvas)
 	}
 	ctx.fill();
 	ctx.stroke();
+	ctx.closePath();
 };
 
 cp.SegmentShape.prototype.draw = function(ctx, scale, point2canvas) {
@@ -433,83 +422,7 @@ cp.CircleShape.prototype.draw = function(ctx, scale, point2canvas) {
 	drawCircle(ctx, scale, point2canvas, this.tc, this.r);
 
 	// And draw a little radian so you can see the circle roll.
-	drawLine(ctx, point2canvas, this.tc, cp.v.mult(this.body.rot, this.r).add(this.tc));
-};
-
-var randColor = function() {
-  return Math.floor(Math.random() * 256);
-};
-
-var styles = [];
-for (var i = 0; i < 100; i++) {
-	styles.push("rgb(" + randColor() + ", " + randColor() + ", " + randColor() + ")");
-}
-
-cp.Shape.prototype.style = function() {
-  var body;
-  if (this.sensor) {
-    return "rgba(255,255,255,0)";
-  } else {
-    body = this.body;
-    if (body.isSleeping()) {
-      return "rgb(50,50,50)";
-    } else if (body.nodeIdleTime > this.space.sleepTimeThreshold) {
-      return "rgb(170,170,170)";
-    } else {
-      return styles[this.hashid % styles.length];
-    }
-  }
-};
-
-var demos = [];
-var addTest = function(name, demo) {
-	demos.push({name:name, demo:demo});
+	//drawLine(ctx, point2canvas, this.tc, cp.v.mult(this.body.rot, this.r).add(this.tc));
 };
 
 
-
-var Balls = function() {
-	Test.call(this);
-
-	var space = this.space;
-	space.iterations = 60;
-	space.gravity = v(0, 0);
-	space.damping = .01;
-	space.sleepTimeThreshold = 0.5;
-	space.collisionSlop = 0.5;
-	space.sleepTimeThreshold = 0.5;
-
-	this.addFloor();
-	this.addWalls();
-
-
-	for (var i = 1; i <= 200; i++) {
-		var radius = 5;
-		mass = 3;
-		var body = space.addBody(new cp.Body(mass, cp.momentForCircle(mass, 0, radius, v(0, 0))));
-		//body.setPos(v(200 + i, (2 * radius + 5) * i));
-		body.setPos(v(100,100));
-		var circle = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
-		circle.setElasticity(0.8);
-		circle.setFriction(1);
-	}
-
-
-/*
- * atom.canvas.onmousedown = function(e) {
-      radius = 10;
-      mass = 3;
-      body = space.addBody(new cp.Body(mass, cp.momentForCircle(mass, 0, radius, v(0, 0))));
-      body.setPos(v(e.clientX, e.clientY));
-      circle = space.addShape(new cp.CircleShape(body, radius, v(0, 0)));
-      circle.setElasticity(0.5);
-      return circle.setFriction(1);
-    };
-*/
-};
-
-Balls.prototype = Object.create(Test.prototype);
-
-addTest('Balls', Balls);
-
-console.log(cp);

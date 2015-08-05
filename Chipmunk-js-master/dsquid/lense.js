@@ -26,7 +26,7 @@ var Lense = function (s, centerX, centerY, rad) {
 
 
     fuiController.lensesList.push(this);
-    var mask_bit = this.mask_bit = 1<<(fuiController.lensesList.length);
+    var mask_bit = this.mask_bit = DATAPOINT_MASK_BIT;
     shape.setLayers( mask_bit );
 
 
@@ -76,7 +76,7 @@ Lense.prototype.callFilters = function () {
 
         //if it's a wall
         if (this.wall == true) {
-            console.log("WALL FILTERING");
+            //console.log("WALL FILTERING");
 
             //get disabled[] from all of the filters
             disabled = this.filterList[i].filter_points().disabled;
@@ -95,7 +95,7 @@ Lense.prototype.callFilters = function () {
 
         //else, it's a lense
         else {
-            console.log("LENSE FILTERING");
+            //console.log("LENSE FILTERING");
             //get disabled[] from all of the filters
             if (this.global == false) {
                 console.log(this);
@@ -124,9 +124,14 @@ Lense.prototype.setWall = function () {
     if (this.wall == false) {
         this.shape.setSensor(false);
         this.wall = true;
+        this.mask_bit = 1<<(fuiController.lensesList.length);
+        //console.log(this.mask_bit);
+        this.shape.setLayers(this.mask_bit );
     }
     else {
         this.shape.setSensor(true);
         this.wall = false;
+        this.mask_bit = DATAPOINT_MASK_BIT;
+        this.shape.setLayers(this.mask_bit);
     }
 }

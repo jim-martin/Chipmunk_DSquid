@@ -46,9 +46,8 @@ Lense.prototype.getPoints = function () {
     });
 
     //return the points inside bounds
-    //console.log(returnVal);
+    console.log(returnVal);
     return returnVal;
-
 };
 
 Lense.prototype.draw = function (ctx, scale, point2canvas) {
@@ -72,9 +71,13 @@ Lense.prototype.callFilters = function () {
     //iterate through all filters
     var disabled = [];
 
-
+    //for each filter
     for (var i = 0; i < this.filterList.length; i++) {
-        if (this.wall == true) { //if it's a wall
+
+        //if it's a wall
+        if (this.wall == true) {
+            console.log("WALL FILTERING");
+
             //get disabled[] from all of the filters
             disabled = this.filterList[i].filter_points().disabled;
 
@@ -89,9 +92,13 @@ Lense.prototype.callFilters = function () {
 
             }
         }
-        else { //else, it's a lense
+
+        //else, it's a lense
+        else {
+            console.log("LENSE FILTERING");
             //get disabled[] from all of the filters
             if (this.global == false) {
+                console.log(this);
                 disabled = this.filterList[i].filter_points(this.getPoints()).disabled;
             }
             else {
@@ -100,10 +107,12 @@ Lense.prototype.callFilters = function () {
             //console.log(disabled);
 
             //change styling on disabled points
-            for (var j = 0; j < disabled.length; j++) {
+            //console.log(disabled);
+            for (var p = 0; p < disabled.length; p++) {
                 //console.log(disabled[j]);
-                if (typeof(disabled[j]) != "undefined") {
-                    disabled[j].filteredOut = true;
+                if (typeof(disabled[p]) != "undefined") {
+                    disabled[p].filteredOut = true;
+                    //console.log(disabled[p]);
                 }
 
             }
@@ -111,8 +120,8 @@ Lense.prototype.callFilters = function () {
     }
 }
 
-Lense.prototype.setWall = function (wallBool) {
-    if (wallBool) {
+Lense.prototype.setWall = function () {
+    if (this.wall == false) {
         this.shape.setSensor(false);
         this.wall = true;
     }

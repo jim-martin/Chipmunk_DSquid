@@ -88,11 +88,14 @@ cp.Shape.prototype.pairDataPoint = function(d) {
 };
 
 function clean_all_datapoints(){
+
+    //console.log("cleaning datapoints");
+
     for(var i = 0; i < datapoints.length; i++){
         datapoints[i].filteredOut = false;
         datapoints[i].highlighted = false;
 
         //for wall
-        //datapoints[i].mask_bit = DATAPOINT_MASK_BIT;
+        datapoints[i].mask_bit = DATAPOINT_MASK_BIT;
     }
 }

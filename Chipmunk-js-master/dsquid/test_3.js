@@ -3,6 +3,7 @@ var v = cp.v;
 var ctx;
 
 var DATAPOINT_MASK_BIT = 1<<30;
+//var DATAPOINT_MASK_BIT = 0;
 
 var datapoints = [];
 var filterChanged = false;

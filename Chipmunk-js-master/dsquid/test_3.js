@@ -82,7 +82,8 @@ var Test = function() {
 			}else{
 
 				//log start point of selection (also servers as bool for draw call)
-				self.tempSelection = new Wall(self.space, self.mouse.x, self.mouse.y, 0);
+				self.tempSelection = new Lense(self.space, self.mouse.x, self.mouse.y, 0);
+                fuiController.repopulate_filter_panel();
 				console.log("selectionStart");
 
 				//start tracking selection area

@@ -23,7 +23,7 @@ var filterUIController = function(){
         }
     }
 
-    var repopulate_filter_panel = function(){
+    var repopulate_filter_panel = this.repopulate_filter_panel =  function(){
         //clear boxes
         $(".globalFilters").html("");
         $("#lenseList").html("");
@@ -33,11 +33,13 @@ var filterUIController = function(){
 
         //repopulate global filters and lenses
         for(var k = 0; k < lensesList.length; k++) {
+            console.log("populating lense "+k);
+
 
             //given lense 0 = global filters
             if(k == 0){
 
-                var lenseCard = $('<div class="objectCard"> <div class="objectTopBar"> <h2>Global Filters</h2> </div> <div objectType="global" number="'+k+'" class="globalFilters filterList"> </div> </div>');
+                var lenseCard = $('<div class="objectCard" number="'+k+'"> <div class="objectTopBar"> <h2>Global Filters</h2> </div> <div objectType="global" number="'+k+'" class="globalFilters filterList"> </div> </div>');
                 $("#filters").append(lenseCard);
 
                 //populate global filter UI
@@ -75,7 +77,9 @@ var filterUIController = function(){
             //for lense > 0 - create new lense UI component
             if(k > 0){
 
-                var lenseCard = $('<div class="objectCard"> <div class="objectTopBar"> <h2>Lense '+k+'</h2> </div> <div objectType="lense" number="'+k+'" class="lenseFilters filterList"> </div> </div>');
+                var lenseCard = $('<div class="objectCard" number="'+k+'"> <div class="objectTopBar"> <h2>Lense '+k+'</h2> </div> <div objectType="lense" number="'+k+'" class="lenseFilters filterList"> </div>' +
+                '<div onclick="fuiController.toggleWall(this, true)">Make Wall</div>' +
+                ' </div>');
                 $("#filters").append(lenseCard);
 
 
@@ -237,47 +241,53 @@ var filterUIController = function(){
             lensesList[i].callFilters();
         }
     }
-}
 
-
-function add_filter() {
-    //create new select
-
-    var newFilter = $('<div filter_id="'+filter_list.length+'"><select onchange="filter_update_axes(this)">Axes</select> Min: <input type="number"  onchange="filter_update_numbers(this)"> Max: <input type="number" onchange="filter_update_numbers(this)"><span onclick="remove_filter(this)"> Remove</span></div>')
-    $("#loose_filters").append(newFilter);
-
-    newSelect = newFilter.children("select")[0];
-
-    //populate select
-    for (var i = 1; i < headers.length; i++) {
-        newSelect.options[i - 1] = new Option(headers[i], headers[i]);
-        //ySelect.options[i - 1] = new Option(headers[i], headers[i]);
-
-        //onchange -> redraw
-
-        //<select id="xAxis" onchange="position_points();"></select>
-
-
-
+    var toggleWall = this.toggleWall = function(a, wallBool){
+        //console.log(a);
+        var lenseNumber = $(a).parent().attr("number");
+        lensesList[lenseNumber].setWall(wallBool);
     }
-    var scale = get_scale(headers[1]);
-    //populate values in min / max
-    min_field = newFilter.children("[type='number']")[0];
-    max_field = newFilter.children("[type='number']")[1];
-
-    $(min_field).val(scale.min);
-    $(max_field).val(scale.max);
-
-    //create new filter
-    //console.log(new_filter("Sector #", 5, 8));
-
-    //push new filter to filters[]
-    filter_list.push(new_filter("Sector #", scale.min, scale.max));
-
-    //allow change through interface to edit the filter in filter[]
-
-    //filter
 }
+
+
+//function add_filter() {
+//    //create new select
+//
+//    var newFilter = $('<div filter_id="'+filter_list.length+'"><select onchange="filter_update_axes(this)">Axes</select> Min: <input type="number"  onchange="filter_update_numbers(this)"> Max: <input type="number" onchange="filter_update_numbers(this)"><span onclick="remove_filter(this)"> Remove</span></div>')
+//    $("#loose_filters").append(newFilter);
+//
+//    newSelect = newFilter.children("select")[0];
+//
+//    //populate select
+//    for (var i = 1; i < headers.length; i++) {
+//        newSelect.options[i - 1] = new Option(headers[i], headers[i]);
+//        //ySelect.options[i - 1] = new Option(headers[i], headers[i]);
+//
+//        //onchange -> redraw
+//
+//        //<select id="xAxis" onchange="position_points();"></select>
+//
+//
+//
+//    }
+//    var scale = get_scale(headers[1]);
+//    //populate values in min / max
+//    min_field = newFilter.children("[type='number']")[0];
+//    max_field = newFilter.children("[type='number']")[1];
+//
+//    $(min_field).val(scale.min);
+//    $(max_field).val(scale.max);
+//
+//    //create new filter
+//    //console.log(new_filter("Sector #", 5, 8));
+//
+//    //push new filter to filters[]
+//    filter_list.push(new_filter("Sector #", scale.min, scale.max));
+//
+//    //allow change through interface to edit the filter in filter[]
+//
+//    //filter
+//}
 
 
 var fuiController = new filterUIController();

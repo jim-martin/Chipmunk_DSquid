@@ -2,7 +2,14 @@
 <style>
 	body {
 		margin: 0px;
+        /*font-family: "sans-serif" !important;*/
 	}
+    html{
+        font-family: "museo-sans-rounded",sans-serif;
+    }
+    *{
+        box-sizing:border-box;
+    }
 
 	#tabbar {
 		padding-top: 2px;
@@ -52,13 +59,14 @@
         overflow-y:scroll;
     }
     #filters{
+        padding:15px;
         z-axis:10;
         position:fixed;
         width:60%;
         top:0;
         bottom:0;
         right:-60%;
-        background:rgba(255,255,255,.8);
+        background:rgba(240,240,240,.8);
         border:1px solid #888;
         /*display:none;*/
         /*margin:20px 10%;*/
@@ -78,10 +86,73 @@
     td:last-child {
         padding-right: 0; }
 
+    .controlBar{
+        width:100%;
+        height:40px;
+        vertical-align:middle;
+        background:white;
+        border-bottom:1px solid gray;
+    }
+    .navButton{
+        line-height:40px;
+        display:inline-block;
+        vertical-align:middle;
+        margin:0 20px;
+        width:150px;
+    }
+    img{
+        max-width:100%;
+        max-height:100%;
+    }
+
+    .navButton img{
+        max-height:30px;
+        max-width:50px;
+        display:inline-block;
+        vertical-align:middle;
+    }
+    .navButton .navText{
+        display:inline-block;
+    }
+
+    .objectCard{
+        background:white;
+        /*padding:15px;*/
+        border-radius:5px;
+        overflow:hidden;
+        margin-bottom:15px;
+
+    }
+    .objectTopBar{
+        padding:15px;
+        border-bottom:2px solid green;
+    }
+    .objectTopBar h2{
+        margin:0;
+        display:inline-block;
+    }
+    .objectFilters{
+        padding:15px;
+    }
+    .filterList{
+        padding:15px;
+    }
+
 </style>
-<div>
-    <span onclick="open_picker();">Change Axes</span>
-    <span onclick="fuiController.open_filters();">Filters</span>
+<div class="controlBar">
+    <div class="navButton" onclick="open_picker();">
+        <img src="img/axes.svg" >
+        <div class="navText">
+        Change Axes
+            </div>
+    </div>
+    <div class="navButton" onclick="fuiController.open_filters();">
+        <img src="img/filters.svg">
+        <div class="navText">
+        Filters
+            </div>
+    </div>
+
 </div>
 <div id="picker">
 </div>
@@ -89,27 +160,37 @@
     <!--<div>-->
     <!--<select>Axes</select><input type="number"><input type="number">Remove-->
     <!--</div>-->
-    <h3>Global Filters</h3>
-    <div id="globalList">
+    <!--<h3>Global Filters</h3>-->
+    <!--<div id="globalList">-->
 
-    </div>
-    <h3>Lenses</h3>
-    <div id="lenseList">
+    <!--</div>-->
+    <!--<h3>Lenses</h3>-->
+    <!--<div id="lenseList">-->
 
-    </div>
-    <h3>Walls</h3>
-    <div id="wallList">
+    <!--</div>-->
+    <!--<h3>Walls</h3>-->
+    <!--<div id="wallList">-->
 
-    </div>
+    <!--</div>-->
 
-
-    <div id="loose_filters">
-        <h3>Loose Filters</h3>
-        <div onclick="add_filter()">
-            Add
+    <div class="objectCard">
+        <div class="objectTopBar">
+            <h2>Global Filter</h2>
         </div>
+        <div objectType="lense" number="0" class="globalFilters">
+        </div>
+    </div>
+
 
     </div>
+
+    <!--<div id="loose_filters">-->
+        <!--<h3>Loose Filters (deprecated)</h3>-->
+        <!--<div onclick="add_filter()">-->
+            <!--Add-->
+        <!--</div>-->
+
+    <!--</div>-->
 
     </div>
 <canvas></canvas>
@@ -127,3 +208,6 @@
 <script src="filters.js"></script>
 <script src="test_3.js"></script>
 <script src="test_3_balls.js"></script>
+
+<script src="//use.typekit.net/etu2hzm.js"></script>
+<script>try{Typekit.load();}catch(e){}</script>

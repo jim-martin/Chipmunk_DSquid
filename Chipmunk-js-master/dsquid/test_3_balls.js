@@ -11,11 +11,6 @@ var target_index;
 
 var view_sequence = [];
 
-var colorDim;
-var sizeDim;
-var xDim;
-var yDim;
-
 var picker = $("#picker");
 
 var lenses = [];
@@ -23,15 +18,17 @@ var lenses = [];
 var balls;
 
 function init_graph() {
-    //draw two selectors for axes
-    xDim = headers[1];
-    yDim = headers[2];
 
+    puiController.populate_picker();
+    
+    // //draw two selectors for axes
+    // xDim = headers[1];
+    // yDim = headers[2];
 
-    populate_picker();
+    // populate_picker();
 
-    //change one of them to not be sector #
-    position_points();
+    // //change one of them to not be sector #
+    // position_points();
 
     //fuiController = new filterUIController();
 
@@ -47,7 +44,26 @@ function init_graph() {
 
 }
 
-function populate_picker(){
+function clean_datapoint(a){
+    a = a.split(" ").join("");
+    a = a.split("$").join("");
+    a = a.split("\"").join("");
+    a = a.split("%").join("");
+    a = a.split(",").join("");
+    if (a == "N/A") //default N/A's to 0
+        a = 0;
+
+    a = Number(a);
+
+    return a;
+}
+
+function get_shape_info(index){
+    dataKeys = Object.keys(pointsData);
+    // console.log(pointsData[dataKeys[index]]);
+}
+
+/*function populate_picker(){
     //create table
     //field
 
@@ -114,28 +130,7 @@ function populate_picker(){
             }
 
         stack.PushCommand( view_command );
-
-        // position_points();
     })
-}
-
-function clean_datapoint(a){
-    a = a.split(" ").join("");
-    a = a.split("$").join("");
-    a = a.split("\"").join("");
-    a = a.split("%").join("");
-    a = a.split(",").join("");
-    if (a == "N/A") //default N/A's to 0
-        a = 0;
-
-    a = Number(a);
-
-    return a;
-}
-
-function get_shape_info(index){
-    dataKeys = Object.keys(pointsData);
-    // console.log(pointsData[dataKeys[index]]);
 }
 
 //rescale
@@ -292,25 +287,7 @@ function position_points( dimensions ) {
 
     }
     //console.log(datapoints);
-}
-
-
-function push_view(){
-    //push new ViewCommand with
-    //new axes
-    //old axes
-    var new_view = [];
-    new_view[0] = x_var;
-    new_view[1] = y_var;
-
-    //how do you get these?
-    var old_view = [];
-    old_view[0] = '';
-    old_view[1] = '';
-
-    var new_view_command = new ViewCommand(new_view, old_view);
-    new_view_command.execute();
-}
+}*/
 
 var temp_view = [];
 function open_picker(){
@@ -350,24 +327,6 @@ var Balls = function () {
     space.collisionSlop = 0.5;
     space.sleepTimeThreshold = 0.5;
     space.damping = .001;
-
-    //this.addFloor();
-    //this.addWalls();
-
-    //var width = 50;
-    //var height = 60;
-    //var mass = width * height * 1/1000;
-    //var rock = space.addBody(new cp.Body(mass, cp.momentForBox(mass, width, height)));
-    //rock.setPos(v(500, 100));
-    //rock.setAngle(1);
-    //shape = space.addShape(new cp.BoxShape(rock, width, height));
-    //shape.setFriction(0.3);
-    //shape.setElasticity(0.3);
-
-    //read in CSV file
-    //parse into JSON
-    //based on selected attributes
-    //draw each point
 
 
     $.ajax({

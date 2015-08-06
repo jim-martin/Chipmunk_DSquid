@@ -8,7 +8,7 @@ var filterCount = 0;
 var Filter = function(){
     newFilter = {};
 
-    var scale = get_scale(headers[1]);
+    var scale = puiController.get_scale(headers[1]);
 
     newFilter.min = scale.min;
     newFilter.max = scale.max;

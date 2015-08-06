@@ -56,7 +56,8 @@ undo_stack.prototype.PushCommand = function( command ){
 	};
 	//add the current action to the top of the stack
 	this.commands.push( command );
-	command.execute();
+	this.currentStep = this.commands.length - 1;
+	this.commands[this.currentStep].execute();
 	this.currentStep++;
 
 }

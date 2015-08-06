@@ -1,5 +1,3 @@
-
-
 var pickerUIController = function(){
 
 	var picker = this.picker = $("#picker");
@@ -8,6 +6,18 @@ var pickerUIController = function(){
 	var yDim = this.yDim;
 	var colorDim = this.colorDim;
 	var sizeDim = this.sizeDim;
+
+	var open_picker = this.open_picker = function(){
+	    console.log("open picker");
+	    if(picker.css("display") == "block"){
+	        picker.css({"display":"none"});
+	    }
+	    else{
+	        picker.css({"display":"block"});
+	    }
+
+
+	}
 
 
 	var populate_picker = this.populate_picker = function(){

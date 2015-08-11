@@ -1,6 +1,10 @@
 /*
 Lense object
  */
+
+//can do up to 30 lenses (32 bit collision mask
+//may start breaking after 30 lenses / walls / globals
+
 var Lense = function(s, centerX, centerY, rad){
 //if radius == 0 then it is global
 
